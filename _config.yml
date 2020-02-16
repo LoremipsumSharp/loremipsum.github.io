@@ -124,3 +124,8 @@ deploy:
   branch: master
   message: Deploy generated pages
 
+comment:
+   type: livere
+   livere_id: 'city'
+   livere_uid: MTAyMC80ODY1NC8yNTE0OA
+
