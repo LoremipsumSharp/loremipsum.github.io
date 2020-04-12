@@ -1,6 +1,6 @@
 
 ---
-title: .NetCore应用配置Auto Core Dump
+title: NetCore应用配置Auto Core Dump
 ---
 
 ## 问题背景
