@@ -53,7 +53,7 @@ services.AddCors(option => option.AddPolicy("corsPolicy", builders =>
 ```
 
 
-### options2 使用 SetIsOriginAllowed
+### options2 使用 SetIsOriginAllowed（可以起到与AllowAnyOriginu一样的效果）
 
 
 ```
