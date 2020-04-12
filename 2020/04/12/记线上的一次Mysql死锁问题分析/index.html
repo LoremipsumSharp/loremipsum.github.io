@@ -153,7 +153,7 @@
 <p>至此死锁产生。</p>
 <h2 id="问题解决"><a href="#问题解决" class="headerlink" title="问题解决"></a>问题解决</h2><p>用了一个比较简单+暴力的方法：领取接口直接上redis分布式锁。</p>
 <h2 id="总结与反思"><a href="#总结与反思" class="headerlink" title="总结与反思"></a>总结与反思</h2><p>这个项目是使用DDD的思想进行开发的，自然而然地在ORM上面的选型使用了EntityFramework Code First,但是Code Firit在建表的时候会自做主张的在“多”端生成外键。对外键的使用，除开了一部分性能开销，就是上述的死锁问题，后续考虑把这部分重构为DbFirst。</p>
-<p>另外值得一提的是，后来对这部逻辑做了压测，发现这部分代码在Sql Server跑是没问题的，因为Sql Server在插入子表的时候不会对父表记录上锁，而Mysql会对父表上锁,所以产生了死锁</p>
+<p>另外值得一提的是，后来对这部逻辑做了压测，发现这部分代码在Sql Server跑是没问题的，因为Sql Server在插入子表的时候不会对父表记录上锁，而Mysql会对父表上锁,所以产生了死锁，天下果然没有免费午餐！</p>
 <h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="https://stackoverflow.com/questions/7335582/dbcontext-savechanges-order-of-statement-execution" target="_blank" rel="noopener">DbContext SaveChanges Order of Statement Execution
 </a></p>
 <p><a href="https://bugs.mysql.com/bug.php?id=48652" target="_blank" rel="noopener">Deadlock due to Foreign Key constraint</a></p>
