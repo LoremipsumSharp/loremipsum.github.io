@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://loremipsumsharp.github.io/"/>
-  <updated>2020-04-12T17:26:45.682Z</updated>
+  <updated>2020-04-22T17:35:58.717Z</updated>
   <id>https://loremipsumsharp.github.io/</id>
   
   <author>
@@ -15,6 +15,21 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>记线上的一次Mysql死锁问题分析</title>
+    <link href="https://loremipsumsharp.github.io/2020/04/23/%E9%AB%98%E5%B9%B6%E5%8F%91%E5%9C%BA%E6%99%AF%E4%B8%8BStackExchange.Redis%E9%A9%B1%E5%8A%A8%E7%9A%84%E8%B6%85%E6%97%B6%E9%97%AE%E9%A2%98/"/>
+    <id>https://loremipsumsharp.github.io/2020/04/23/%E9%AB%98%E5%B9%B6%E5%8F%91%E5%9C%BA%E6%99%AF%E4%B8%8BStackExchange.Redis%E9%A9%B1%E5%8A%A8%E7%9A%84%E8%B6%85%E6%97%B6%E9%97%AE%E9%A2%98/</id>
+    <published>2020-04-22T17:31:47.622Z</published>
+    <updated>2020-04-22T17:35:58.717Z</updated>
+    
+    <summary type="html">
+    
+    </summary>
+    
+    
+    
+  </entry>
   
   <entry>
     <title>NetCore应用配置Auto Core Dump</title>
