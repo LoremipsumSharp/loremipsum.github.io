@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://loremipsumsharp.github.io/2020/04/27/%E4%BD%BF%E7%94%A8ValueTask%E5%87%8F%E5%B0%91%E5%81%87%E5%BC%82%E6%AD%A5%E4%BB%A3%E7%A0%81%E5%BC%95%E8%B5%B7%E7%9A%84GC/</loc>
+    
+    <lastmod>2020-04-27T17:03:33.050Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://loremipsumsharp.github.io/tags/index.html</loc>
     
     <lastmod>2020-04-25T05:40:09.470Z</lastmod>
