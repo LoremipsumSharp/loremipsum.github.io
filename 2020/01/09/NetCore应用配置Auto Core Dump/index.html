@@ -11,7 +11,7 @@
 
     <title>
         
-        AspNetCore2.1升级到3.1时CORS相关配置的变更 - Loremipsum Blog
+        NetCore应用配置Auto Core Dump - Loremipsum Blog
         
     </title>
 
@@ -94,7 +94,7 @@
     </div>
     
         <div id="toc" class="toc-article">
-    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#2-1的相关CORS代码"><span class="toc-text">2.1的相关CORS代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-1的相关CORS代码"><span class="toc-text">3.1的相关CORS代码</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#options1-显示声明允许跨域的origin"><span class="toc-text">options1 显示声明允许跨域的origin</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#options2-使用-SetIsOriginAllowed（可以起到与AllowAnyOriginu一样的效果）"><span class="toc-text">options2 使用 SetIsOriginAllowed（可以起到与AllowAnyOriginu一样的效果）</span></a></li></ol></li></ol>
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#问题背景"><span class="toc-text">问题背景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Auto-Core-Dump配置方法"><span class="toc-text">Auto Core Dump配置方法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#实验"><span class="toc-text">实验</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-text">参考</span></a></li></ol>
 </div>
     
 </div>
@@ -125,11 +125,11 @@
 
 <div class="post-container">
     <div class="post-title">
-        AspNetCore2.1升级到3.1时CORS相关配置的变更
+        NetCore应用配置Auto Core Dump
     </div>
 
     <div class="post-meta">
-        <span class="attr">发布于：<span>2020-04-25 13:40:09</span></span>
+        <span class="attr">发布于：<span>2020-01-09 20:40:12</span></span>
         
         </span>
         <span class="attr">访问：<span id="busuanzi_value_page_pv"></span>
@@ -137,21 +137,53 @@
 </span>
     </div>
     <div class="post-content ">
-        <p>本周将公司的运营系统从AspNetCore2.1升级到了AspNetCore3.1,遇到了一些坑，这里记录以下</p>
-<h2 id="2-1的相关CORS代码"><a href="#2-1的相关CORS代码" class="headerlink" title="2.1的相关CORS代码"></a>2.1的相关CORS代码</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">public IServiceProvider ConfigureServices(IServiceCollection services)</span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">        ... &#x2F;&#x2F; 省略</span><br><span class="line">        services.AddCors(option &#x3D;&gt; option.AddPolicy(&quot;corsPolicy&quot;, builders &#x3D;&gt;</span><br><span class="line">        &#123;</span><br><span class="line">            builders.AllowCredentials().AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();</span><br><span class="line">        &#125;));</span><br><span class="line">        ... &#x2F;&#x2F; 省略</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public void Configure(IApplicationBuilder app, ILoggerFactory loggerFactory, IHostingEnvironment env)</span><br><span class="line">&#123;</span><br><span class="line">    ... &#x2F;&#x2F; 省略</span><br><span class="line">    app.UseCors(&quot;corsPolicy&quot;);</span><br><span class="line">     ... &#x2F;&#x2F; 省略</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+        <h2 id="问题背景"><a href="#问题背景" class="headerlink" title="问题背景"></a>问题背景</h2><p>前阵子线上用户标签服务频繁出现内存泄漏问题，早上服务运行的好好的，经常一到半夜服务就挂掉。由于事发半夜，很难加以人工干预，而早上dump出来的文件参考价值很低，迫切需要一种自动化的手段让服务在宕掉的时候能够保存完整的案发现场。事实上，.NET CORE可以支持这一需求，不过默认是不开启的，需要加以配置。</p>
+<h2 id="Auto-Core-Dump配置方法"><a href="#Auto-Core-Dump配置方法" class="headerlink" title="Auto Core Dump配置方法"></a>Auto Core Dump配置方法</h2><p>以下内容是我原封不动从dotnet/rumtime这个仓库拷贝过来的：</p>
+<p>Environment variables supported:</p>
+<ul>
+<li><code>COMPlus_DbgEnableMiniDump</code>: if set to “1”, enables this core dump generation. The default is NOT to generate a dump.</li>
+<li><code>COMPlus_DbgMiniDumpType</code>: See below. Default is “2” MiniDumpWithPrivateReadWriteMemory.</li>
+<li><code>COMPlus_DbgMiniDumpName</code>: if set, use as the template to create the dump path and file name. The pid can be placed in the name with %d. The default is <em>/tmp/coredump.%d</em>.</li>
+<li><code>COMPlus_CreateDumpDiagnostics</code>: if set to “1”, enables the <em>createdump</em> utilities diagnostic messages (TRACE macro).</li>
+</ul>
+<p>COMPlus_DbgMiniDumpType values:</p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th align="center">Minidump Enum</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td align="center">MiniDumpNormal</td>
+<td>Include just the information necessary to capture stack traces for all existing threads in a process. Limited GC heap memory and information.</td>
+</tr>
+<tr>
+<td>2</td>
+<td align="center">MiniDumpWithPrivateReadWriteMemory (default)</td>
+<td>Includes the GC heaps and information necessary to capture stack traces for all existing threads in a process.</td>
+</tr>
+<tr>
+<td>3</td>
+<td align="center">MiniDumpFilterTriage</td>
+<td>Include just the information necessary to capture stack traces for all existing threads in a process. Limited GC heap memory and information.</td>
+</tr>
+<tr>
+<td>4</td>
+<td align="center">MiniDumpWithFullMemory</td>
+<td>Include all accessible memory in the process. The raw memory data is included at the end, so that the initial structures can be mapped directly without the raw memory information. This option can result in a very large file.</td>
+</tr>
+</tbody></table>
+<p>根据以上内容，可以在Dockerfile或者docker-compose文件加入以下环境变量</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ENV COMPlus_DbgEnableMiniDump&#x3D;&quot;1&quot;  # enables core dump generation</span><br><span class="line">ENV COMPlus_DbgMiniDumpName&#x3D;&quot;&#x2F;diagnostics&#x2F;dumps&#x2F;coredump_%d&quot; # core dump文件位置，一般是一个挂在在宿主机的目录</span><br><span class="line">ENV COMPlus_DbgMiniDumpType&#x3D;&quot;4&quot; # 建议选择4，也就是full dump，保存的“现场”更加完整，但文件也会非常大</span><br></pre></td></tr></table></figure>
 
-<p>如果这部分代码这3.1的服务中不加任何修改，启动时提示错误：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">The CORS protocol does not allow specifying a wildcard (any) origin and credentials at the same time. Configure the CORS policy by listing individual origins if credentials needs to be supported.</span><br></pre></td></tr></table></figure>
 
-
-<p>这是由于在2.1之后,AspNetCore出于安全考虑，做了更加严格的限制，在不AllowCredentials()与AllowAnyOrigin()。</p>
-<p>假设现在站点A存在一个恶意脚本，而站点B存在一个比较的敏感的接口（如转账）。如果站点B作为服务端使用AllowCredentials()与AllowAnyOrigin()的同源配置，此时站点A可以直接调用站点B的敏感接口并发送凭证信息（如Cookie），那么将导致用户信息被窃取。</p>
-<h2 id="3-1的相关CORS代码"><a href="#3-1的相关CORS代码" class="headerlink" title="3.1的相关CORS代码"></a>3.1的相关CORS代码</h2><h3 id="options1-显示声明允许跨域的origin"><a href="#options1-显示声明允许跨域的origin" class="headerlink" title="options1 显示声明允许跨域的origin"></a>options1 显示声明允许跨域的origin</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">services.AddCors(option &#x3D;&gt; option.AddPolicy(&quot;corsPolicy&quot;, builders &#x3D;&gt;</span><br><span class="line">            &#123;</span><br><span class="line">                builders.WithOrigins(&quot;http:&#x2F;&#x2F;site.com&quot;).AllowAnyHeader().AllowAnyMethod().AllowCredentials();</span><br><span class="line">            &#125;));</span><br></pre></td></tr></table></figure>
-
-
-<h3 id="options2-使用-SetIsOriginAllowed（可以起到与AllowAnyOriginu一样的效果）"><a href="#options2-使用-SetIsOriginAllowed（可以起到与AllowAnyOriginu一样的效果）" class="headerlink" title="options2 使用 SetIsOriginAllowed（可以起到与AllowAnyOriginu一样的效果）"></a>options2 使用 SetIsOriginAllowed（可以起到与AllowAnyOriginu一样的效果）</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">services.AddCors(option &#x3D;&gt; option.AddPolicy(&quot;corsPolicy&quot;, builders &#x3D;&gt;</span><br><span class="line">            &#123;</span><br><span class="line">                builders.SetIsOriginAllowed(origin&#x3D;&gt;true).AllowAnyHeader().AllowAnyMethod().AllowCredentials(); &#x2F;&#x2F;SetIsOriginAllowed(origin&#x3D;&gt;true)允许所有origin</span><br><span class="line">            &#125;));</span><br></pre></td></tr></table></figure>
-
-
+<h2 id="实验"><a href="#实验" class="headerlink" title="实验"></a>实验</h2><p>在一个可以被调用的接口加入以下代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Environment.FailFast()</span><br></pre></td></tr></table></figure>
+<p>这个方法可以让应用直接挂掉,挂掉后观察相应的挂载目录有无生成dump文件</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="https://github.com/dotnet/runtime/blob/8497763bbfa70455e6f08ed7aa345d43db1d22d7/docs/design/coreclr/botr/xplat-minidump-generation.md" target="_blank" rel="noopener">xplat-minidump-generation</a></p>
 
         
         <br />
