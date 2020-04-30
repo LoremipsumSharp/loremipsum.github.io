@@ -11,7 +11,7 @@
 
     <title>
         
-        Loremipsum Blog
+        Kafka连接超时问题的本质 - Loremipsum Blog
         
     </title>
 
@@ -58,7 +58,7 @@
     </div>
     <div class="contents" id="nav-content">
         <ul>
-            <li  class=active >
+            <li >
                 <a href="/">
                     <i class="iconfont icon-shouye1"></i>
                     <span>主页</span>
@@ -93,6 +93,10 @@
         </ul>
     </div>
     
+        <div id="toc" class="toc-article">
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#问题的背景"><span class="toc-text">问题的背景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#问题的本质"><span class="toc-text">问题的本质</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#问题解决"><span class="toc-text">问题解决</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#问题验证"><span class="toc-text">问题验证</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-text">参考</span></a></li></ol>
+</div>
+    
 </div>
 
 
@@ -117,125 +121,50 @@
     <div class="index-middle">
         <!-- Main Content -->
         
-<div class="post-preview-container" style="min-height: 648px">
-    
-    <div class="post-preview">
-        <div class="post-time">2020-04-27</div>
-        <div class="post-info">
-            <a href="/2020/04/27/使用ValueTask减少假异步代码引起的GC/">
-                <h3>
-                    使用ValueTask减少假异步代码引起的GC
-                </h3>
-            </a>
-            <p>
-                
-            </p>
-        </div>
+
+
+<div class="post-container">
+    <div class="post-title">
+        Kafka连接超时问题的本质
     </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2020-04-25</div>
-        <div class="post-info">
-            <a href="/2020/04/25/高并发场景下StackExchange.Redis驱动的超时问题/">
-                <h3>
-                    高并发场景下StackExchange.Redis驱动的超时问题
-                </h3>
-            </a>
-            <p>
-                
-            </p>
-        </div>
+
+    <div class="post-meta">
+        <span class="attr">发布于：<span>2020-01-15 16:30:20</span></span>
+        
+        </span>
+        <span class="attr">访问：<span id="busuanzi_value_page_pv"></span>
+</span>
+</span>
     </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2020-03-14</div>
-        <div class="post-info">
-            <a href="/2020/03/14/记线上的一次Mysql死锁问题分析/">
-                <h3>
-                    记线上的一次Mysql死锁问题分析
-                </h3>
-            </a>
-            <p>
-                
-            </p>
+    <div class="post-content ">
+        <h2 id="问题的背景"><a href="#问题的背景" class="headerlink" title="问题的背景"></a>问题的背景</h2><p>前段时间开发环境搭建了一套kafka环境，搭建完成后通过客户端去连接kafka时，当produer调用send的时候程序都会直接hang住，提示连接超时：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">org.apache.kafka.common.errors.TimeoutException: </span><br><span class="line">Expiring 1 record(s) for demo-topic-0:120000 ms has passed since batch creation</span><br></pre></td></tr></table></figure>
+<p>接着我试了一下调用producer的partitionsFor方法，可以正常执行。同样的，当consumer执行poll方法时，程序也会直接卡死。</p>
+<h2 id="问题的本质"><a href="#问题的本质" class="headerlink" title="问题的本质"></a>问题的本质</h2><p>producer是通过leader broker往partition写入数据,当producer希望写入数据的时候会向kafka请求当前的leader broker信息，这个时候如果kafka的leader broker的host信息如果和客户端不在同一个网段就会出现上述的超时现象，这也就可以解释为什么partitionsFor方法可以正常执行(不涉及到leader broker的通信)，但是send方法(涉及到leader broker的通信)执行失败。</p>
+<h2 id="问题解决"><a href="#问题解决" class="headerlink" title="问题解决"></a>问题解决</h2><p>配置ADVERTISED_HOST</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bash-4.4# vi $KAFKA_HOME&#x2F;config&#x2F;server.properties</span><br></pre></td></tr></table></figure>
+
+<p>这里我的配置是</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">advertised.listeners&#x3D;PLAINTEXT:&#x2F;&#x2F;127.0.0.1:9092</span><br></pre></td></tr></table></figure>
+
+<p>由于是使用docker部署，客户端和服务端不在同一台机器上，所以我需要把这个配置改为与客户端同一个网段的</p>
+<h2 id="问题验证"><a href="#问题验证" class="headerlink" title="问题验证"></a>问题验证</h2><p>当ADVERTISED_HOST为PLAINTEXT://127.0.0.1:9092可以看到partitionsFor返回的leader broker信息为下图所示：<br><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/CD584EBE-9DDF-4bbb-AF15-7970A064979A.png" alt=""></p>
+<p>修改ADVERTISED_HOST后，返回信息如下：<br><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/53CA72B0-F276-4ef7-B524-18C970ED3443.png" alt=""></p>
+<p>没有再次出现连接超时的问题</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="https://rmoff.net/2018/08/02/kafka-listeners-explained/" target="_blank" rel="noopener">kafka-listeners-explained</a></p>
+<p><a href="https://docs.cloudera.com/runtime/7.1.0/kafka-managing/topics/kafka-manage-client-broker-comp.html" target="_blank" rel="noopener">Client and broker compatibility across Kafka versions</a></p>
+
+        
+        <br />
+        <div id="comment-container">
         </div>
-    </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2020-02-27</div>
-        <div class="post-info">
-            <a href="/2020/02/27/AspNetCore2.1升级到3.1时CORS相关配置的变更/">
-                <h3>
-                    AspNetCore2.1升级到3.1时CORS相关配置的变更
-                </h3>
-            </a>
-            <p>
-                
-            </p>
+        <div id="disqus_thread"></div>
+
+        <div id="lv-container">
         </div>
+
     </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2020-02-11</div>
-        <div class="post-info">
-            <a href="/2020/02/11/InnodDB中的Gap Locks与Next-key Locks/">
-                <h3>
-                    InnodDB中的Gap Locks与Next-key Locks
-                </h3>
-            </a>
-            <p>
-                
-            </p>
-        </div>
-    </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2020-01-19</div>
-        <div class="post-info">
-            <a href="/2020/01/19/Maven库配置阿里云加速/">
-                <h3>
-                    Maven库配置阿里云加速
-                </h3>
-            </a>
-            <p>
-                
-            </p>
-        </div>
-    </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2020-01-15</div>
-        <div class="post-info">
-            <a href="/2020/01/15/Kafka连接超时问题的本质/">
-                <h3>
-                    Kafka连接超时问题的本质
-                </h3>
-            </a>
-            <p>
-                
-            </p>
-        </div>
-    </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2020-01-09</div>
-        <div class="post-info">
-            <a href="/2020/01/09/NetCore应用配置Auto Core Dump/">
-                <h3>
-                    NetCore应用配置Auto Core Dump
-                </h3>
-            </a>
-            <p>
-                
-            </p>
-        </div>
-    </div>
-    
 </div>
-<ul class="pager">
-    
-    
-</ul>
 
     </div>
 </div>
@@ -307,7 +236,7 @@
     // We expose some of the variables needed by the front end
     window.hexo_search_path = "search.json"
     window.hexo_root = "/"
-    window.isPost = false
+    window.isPost = true
 </script>
 <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
 
@@ -317,5 +246,24 @@
 
 
 
+
+    <script type="text/javascript">
+       (function() {
+           if (typeof LivereTower === 'function') { return; }
+
+           var j, d = document.getElementById('lv-container');
+
+           d.setAttribute('data-id','city');
+           d.setAttribute('data-uid' , 'MTAyMC80ODY1NC8yNTE0OA');
+
+           j = document.createElement('script');
+           j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+           j.async = true;
+
+           d.appendChild(j);
+       })();
+    </script>
+    <noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+    </div>
 
 </html>
