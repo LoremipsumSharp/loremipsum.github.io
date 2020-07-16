@@ -137,19 +137,19 @@
 </span>
     </div>
     <div class="post-content ">
-        <h2 id="Working-set"><a href="#Working-set" class="headerlink" title="Working set"></a>Working set</h2><p>this is a part of virtual address space that currently<br>resides in the physical memory. This means it can be further divided<br>into:</p>
+        <h2 id="Working-set"><a href="#Working-set" class="headerlink" title="Working set"></a>Working set</h2><p>this is a part of virtual address space that currently resides in the physical memory. This means it can be further divided into:</p>
 <ul>
 <li>Private working set - consists of committed (private) pages in the<br>physical memory.</li>
-<li>Shareable working set - consists of all shareable pages (no matter<br>if they are actually shared or not)</li>
+<li>Shareable working set - consists of all shareable pages (no matter if they are actually shared or not)</li>
 <li>Shared working set - consists of shareable pages that are actually<br>shared with other processes.</li>
-<li>Private bytes - all committed (private) pages - both in the physical<br>and paged memory.</li>
+<li>Private bytes - all committed (private) pages - both in the physical and paged memory.</li>
 <li>Virtual bytes - both committed (private) and reserved memory</li>
 <li>Paged bytes - part of the virtual bytes that are stored in the page file.<br><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/WeChat%20Screenshot_20200716021336.png" alt=""></li>
 </ul>
 <h2 id="Value-Types"><a href="#Value-Types" class="headerlink" title="Value Types"></a>Value Types</h2><p>We have two categories of value types in the Common Language Specification:</p>
 <ul>
-<li>structs - there are many built-in integral types (char, byte, integer, and<br>so forth), floating-point types, and bool. And, of course, the user can<br>define its own structs.</li>
-<li>enumerations - they are basically an extension of integral types,<br>becoming a type that consists of a set of named constants. From the<br>memory-management point of view, they are just integral types so we<br>won’t deal with them in this book at all as they are in fact structs also<br>internally.</li>
+<li>structs - there are many built-in integral types (char, byte, integer, and so forth), floating-point types, and bool. And, of course, the user can define its own structs.</li>
+<li>enumerations - they are basically an extension of integral types, becoming a type that consists of a set of named constants. From the memory-management point of view, they are just integral types so we won’t deal with them in this book at all as they are in fact structs also internally.</li>
 </ul>
 <h2 id="使用struct的好处"><a href="#使用struct的好处" class="headerlink" title="使用struct的好处"></a>使用struct的好处</h2><ol>
 <li>struct类型是Value Type，所以struct有可能被分配在stack上，分配在stack上可以避免因为分配的heap上所带来的gc</li>
