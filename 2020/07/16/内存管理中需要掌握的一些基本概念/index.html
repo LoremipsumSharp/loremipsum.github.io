@@ -11,7 +11,7 @@
 
     <title>
         
-        Loremipsum Blog
+        .NET内存管理中需要掌握的一些基本概念(持续更新） - Loremipsum Blog
         
     </title>
 
@@ -58,7 +58,7 @@
     </div>
     <div class="contents" id="nav-content">
         <ul>
-            <li  class=active >
+            <li >
                 <a href="/">
                     <i class="iconfont icon-shouye1"></i>
                     <span>主页</span>
@@ -93,6 +93,10 @@
         </ul>
     </div>
     
+        <div id="toc" class="toc-article">
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Working-set"><span class="toc-text">Working set</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Value-Types"><span class="toc-text">Value Types</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#使用struct的好处"><span class="toc-text">使用struct的好处</span></a></li></ol>
+</div>
+    
 </div>
 
 
@@ -117,45 +121,53 @@
     <div class="index-middle">
         <!-- Main Content -->
         
-<div class="post-preview-container" style="min-height: 648px">
-    
-    <div class="post-preview">
-        <div class="post-time">2020-01-15</div>
-        <div class="post-info">
-            <a href="/2020/01/15/Kafka连接超时问题的本质/">
-                <h3>
-                    Kafka连接超时问题的本质
-                </h3>
-            </a>
-            <p>
-                
-            </p>
-        </div>
+
+
+<div class="post-container">
+    <div class="post-title">
+        .NET内存管理中需要掌握的一些基本概念(持续更新）
     </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2020-01-09</div>
-        <div class="post-info">
-            <a href="/2020/01/09/NetCore应用配置Auto Core Dump/">
-                <h3>
-                    NetCore应用配置Auto Core Dump
-                </h3>
-            </a>
-            <p>
-                
-            </p>
-        </div>
+
+    <div class="post-meta">
+        <span class="attr">发布于：<span>2020-07-16 13:40:09</span></span>
+        
+        </span>
+        <span class="attr">访问：<span id="busuanzi_value_page_pv"></span>
+</span>
+</span>
     </div>
-    
-</div>
-<ul class="pager">
-    
-    <li class="previous">
-        <a href="/">&larr; Newer Posts</a>
-    </li>
-    
-    
+    <div class="post-content ">
+        <h2 id="Working-set"><a href="#Working-set" class="headerlink" title="Working set"></a>Working set</h2><p>this is a part of virtual address space that currently<br>resides in the physical memory. This means it can be further divided<br>into:</p>
+<ul>
+<li>Private working set - consists of committed (private) pages in the<br>physical memory.</li>
+<li>Shareable working set - consists of all shareable pages (no matter<br>if they are actually shared or not)</li>
+<li>Shared working set - consists of shareable pages that are actually<br>shared with other processes.</li>
+<li>Private bytes - all committed (private) pages - both in the physical<br>and paged memory.</li>
+<li>Virtual bytes - both committed (private) and reserved memory</li>
+<li>Paged bytes - part of the virtual bytes that are stored in the page file.<br><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/WeChat%20Screenshot_20200716021336.png" alt=""></li>
 </ul>
+<h2 id="Value-Types"><a href="#Value-Types" class="headerlink" title="Value Types"></a>Value Types</h2><p>We have two categories of value types in the Common Language Specification:</p>
+<ul>
+<li>structs - there are many built-in integral types (char, byte, integer, and<br>so forth), floating-point types, and bool. And, of course, the user can<br>define its own structs.</li>
+<li>enumerations - they are basically an extension of integral types,<br>becoming a type that consists of a set of named constants. From the<br>memory-management point of view, they are just integral types so we<br>won’t deal with them in this book at all as they are in fact structs also<br>internally.</li>
+</ul>
+<h2 id="使用struct的好处"><a href="#使用struct的好处" class="headerlink" title="使用struct的好处"></a>使用struct的好处</h2><ol>
+<li>struct类型是Value Type，所以struct有可能被分配在stack上，分配在stack上可以避免因为分配的heap上所带来的gc</li>
+<li>strcut在同等条件下，所需的内存比class要小（这个是因为struct不需要存放相关的元信息）</li>
+<li>struct更加符合data locality的要求,refernce type 总是包含两个额外的字段，给定一个64B的cache line,refernce type命中缓存的概率远低于strcut<br><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/WeChat%20Screenshot_20200716025533.png" alt=""><br><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/WeChat%20Screenshot_20200716025454.png" alt=""></li>
+</ol>
+
+        
+        <br />
+        <div id="comment-container">
+        </div>
+        <div id="disqus_thread"></div>
+
+        <div id="lv-container">
+        </div>
+
+    </div>
+</div>
 
     </div>
 </div>
@@ -227,7 +239,7 @@
     // We expose some of the variables needed by the front end
     window.hexo_search_path = "search.json"
     window.hexo_root = "/"
-    window.isPost = false
+    window.isPost = true
 </script>
 <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
 
@@ -237,5 +249,24 @@
 
 
 
+
+    <script type="text/javascript">
+       (function() {
+           if (typeof LivereTower === 'function') { return; }
+
+           var j, d = document.getElementById('lv-container');
+
+           d.setAttribute('data-id','city');
+           d.setAttribute('data-uid' , 'MTAyMC80ODY1NC8yNTE0OA');
+
+           j = document.createElement('script');
+           j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+           j.async = true;
+
+           d.appendChild(j);
+       })();
+    </script>
+    <noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+    </div>
 
 </html>
