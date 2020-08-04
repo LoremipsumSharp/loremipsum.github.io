@@ -94,7 +94,7 @@
     </div>
     
         <div id="toc" class="toc-article">
-    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Working-set"><span class="toc-text">Working set</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Value-Types"><span class="toc-text">Value Types</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#使用struct的好处"><span class="toc-text">使用struct的好处</span></a></li></ol>
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Working-set"><span class="toc-text">Working set</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Value-Types"><span class="toc-text">Value Types</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#使用struct的好处"><span class="toc-text">使用struct的好处</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Lexical-Scope"><span class="toc-text">Lexical Scope</span></a></li></ol>
 </div>
     
 </div>
@@ -156,6 +156,7 @@
 <li>strcut在同等条件下，所需的内存比class要小（这个是因为struct不需要存放相关的元信息）</li>
 <li>struct更加符合data locality的要求,refernce type 总是包含两个额外的字段，给定一个64B的cache line,refernce type命中缓存的概率远低于strcut<br><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/WeChat%20Screenshot_20200716025533.png" alt=""><br><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/WeChat%20Screenshot_20200716025454.png" alt=""></li>
 </ol>
+<h2 id="Lexical-Scope"><a href="#Lexical-Scope" class="headerlink" title="Lexical Scope"></a>Lexical Scope</h2><p>In the simplest words,it defines areas of code in which the given variable is visiable</p>
 
         
         <br />
