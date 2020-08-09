@@ -137,7 +137,8 @@
 </span>
     </div>
     <div class="post-content ">
-        <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><h2 id="jenkins-动态-slave"><a href="#jenkins-动态-slave" class="headerlink" title="jenkins 动态 slave"></a>jenkins 动态 slave</h2><p>持续构建与发布是我们日常工作中必不可少的一个步骤，目前大多公司都采用 Jenkins 集群来搭建符合需求的 CI/CD 流程，然而传统的 Jenkins Slave 一主多从方式会存在一些痛点，比如：</p>
+        <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>前几天在youtube上面看了一个关于如何<a href="https://www.youtube.com/watch?v=eMOzF_xAm7w&t=3s" target="_blank" rel="noopener">使用jenkins实现k8s的CI/CD)</a>,现对视频中相关的配置方法进行了文字性的总结，并在此基础上引入了sematic release实现版本号的自动生成</p>
+<h2 id="jenkins-动态-slave"><a href="#jenkins-动态-slave" class="headerlink" title="jenkins 动态 slave"></a>jenkins 动态 slave</h2><p>持续构建与发布是我们日常工作中必不可少的一个步骤，目前大多公司都采用 Jenkins 集群来搭建符合需求的 CI/CD 流程，然而传统的 Jenkins Slave 一主多从方式会存在一些痛点，比如：</p>
 <p>主 Master 发生单点故障时，整个流程都不可用了<br>每个 Slave 的配置环境不一样，来完成不同语言的编译打包等操作，但是这些差异化的配置导致管理起来非常不方便，维护起来也是比较费劲<br>资源分配不均衡，有的 Slave 要运行的 job 出现排队等待，而有的 Slave 处于空闲状态<br>资源有浪费，每台 Slave 可能是物理机或者虚拟机，当 Slave 处于空闲状态时，也不会完全释放掉资源。<br>正因为上面的这些种种痛点，我们渴望一种更高效更可靠的方式来完成这个 CI/CD 流程，而 Docker 虚拟化容器技术能很好的解决这个痛点，又特别是在 Kubernetes 集群环境下面能够更好来解决上面的问题，下图是基于 Kubernetes 搭建 Jenkins 集群的简单示意图：<br><img src="https://note.youdao.com/yws/public/resource/55903646e2e421ab731256135919dc37/xmlnote/6FC5FCAC1EE6480EB7C67B0B3DBFFB71/3914" alt="image"></p>
 <h2 id="helm"><a href="#helm" class="headerlink" title="helm"></a>helm</h2><p>Kubernetes是容器集群管理系统，每个成功的软件平台都有一个优秀的打包系统，比如 Debian、Ubuntu 的 apt，Redhat、Centos 的 yum。而 Helm 则是 Kubernetes 上的包管理器。helm相当于一个应用商店，将一个在云上部署的应用相关的组件全部打包起来，进行安装、升级、管理等，如下图所示：<br><img src="https://note.youdao.com/yws/public/resource/55903646e2e421ab731256135919dc37/xmlnote/ACEA7C55CC114F14A072CBD55D8BA607/3923" alt="image"></p>
 <h3 id="HelmClient"><a href="#HelmClient" class="headerlink" title="HelmClient"></a>HelmClient</h3><p>是用户命令行工具，其主要负责如下：</p>
