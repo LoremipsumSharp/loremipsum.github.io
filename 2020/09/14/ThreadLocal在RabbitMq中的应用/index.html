@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="keyword"  content="">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>
+        
+        ThreadLocal的应用 - Loremipsum Blog
+        
+    </title>
+
+    <!-- Custom CSS -->
+    
+<link rel="stylesheet" href="/css/aircloud.css">
+
+    
+<link rel="stylesheet" href="/css/gitment.css">
+
+    <!--<link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">-->
+    <link href="//at.alicdn.com/t/font_620856_pl6z7sid89qkt9.css" rel="stylesheet" type="text/css">
+    <!-- ga & ba script hoook -->
+    <script></script>
+<meta name="generator" content="Hexo 4.2.0"><link rel="alternate" href="/atom.xml" title="Loremipsum Blog" type="application/atom+xml">
+</head>
+
+<body>
+
+<div class="site-nav-toggle" id="site-nav-toggle">
+    <button>
+        <span class="btn-bar"></span>
+        <span class="btn-bar"></span>
+        <span class="btn-bar"></span>
+    </button>
+</div>
+
+<div class="index-about">
+    <i> Things always get worse before they get better. </i>
+</div>
+
+<div class="index-container">
+    
+    <div class="index-left">
+        
+<div class="nav" id="nav">
+    <div class="avatar-name">
+        <div class="avatar ">
+            <img src="/img/avatar.jpg" />
+        </div>
+        <div class="name">
+            <i>Loremipsum</i>
+        </div>
+    </div>
+    <div class="contents" id="nav-content">
+        <ul>
+            <li >
+                <a href="/">
+                    <i class="iconfont icon-shouye1"></i>
+                    <span>主页</span>
+                </a>
+            </li>
+            <li >
+                <a href="/tags">
+                    <i class="iconfont icon-biaoqian1"></i>
+                    <span>标签</span>
+                </a>
+            </li>
+            <li >
+                <a href="/archives">
+                    <i class="iconfont icon-guidang2"></i>
+                    <span>存档</span>
+                </a>
+            </li>
+            <li >
+                <a href="/about/">
+                    <i class="iconfont icon-guanyu2"></i>
+                    <span>关于</span>
+                </a>
+            </li>
+            
+            <li>
+                <a id="search">
+                    <i class="iconfont icon-sousuo1"></i>
+                    <span>搜索</span>
+                </a>
+            </li>
+            
+        </ul>
+    </div>
+    
+        <div id="toc" class="toc-article">
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#基本概念"><span class="toc-text">基本概念</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Thread-Local-Storage"><span class="toc-text">Thread-Local Storage</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ThreadLocal"><span class="toc-text">ThreadLocal</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#具体应用"><span class="toc-text">具体应用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-text">参考</span></a></li></ol>
+</div>
+    
+</div>
+
+
+<div class="search-field" id="search-field">
+    <div class="search-container">
+        <div class="search-input">
+            <span id="esc-search"> <i class="icon-fanhui iconfont"></i></span>
+            <input id="search-input"/>
+            <span id="begin-search">搜索</span>
+        </div>
+        <div class="search-result-container" id="search-result-container">
+
+        </div>
+    </div>
+</div>
+
+        <div class="index-about-mobile">
+            <i> Things always get worse before they get better. </i>
+        </div>
+    </div>
+    
+    <div class="index-middle">
+        <!-- Main Content -->
+        
+
+
+<div class="post-container">
+    <div class="post-title">
+        ThreadLocal的应用
+    </div>
+
+    <div class="post-meta">
+        <span class="attr">发布于：<span>2020-09-14 00:29:00</span></span>
+        
+        </span>
+        <span class="attr">访问：<span id="busuanzi_value_page_pv"></span>
+</span>
+</span>
+    </div>
+    <div class="post-content ">
+        <h2 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h2><h3 id="Thread-Local-Storage"><a href="#Thread-Local-Storage" class="headerlink" title="Thread-Local Storage"></a>Thread-Local Storage</h3><p>在日常开发过程中，你有时候可能会希望一些对象，变量可以做到线程隔离，不相互影响。为了实现这个需求，.NET引入了一个被称为<code>Thread-Local Storage</code> 的概念，通过<code>Thread-Local Storage</code>，变量、对象无需重复定义，也不需要添加锁，就可以实现在线程之间的相互隔离</p>
+<h3 id="ThreadLocal"><a href="#ThreadLocal" class="headerlink" title="ThreadLocal"></a>ThreadLocal<T></h3><p><code>ThreadLocal</code> 是 <code>Thread-Local Storage</code>的一个具体实现，一个<code>ThreadLocal</code>的对象字段，在不通线程之中可以做到相互隔离</p>
+<p>示例代码：<br>` class Program<br>    {<br>        static void Main(string[] args)<br>        {<br>            // contruct on this thread<br>            ThreadLocalDemo demoObject = new ThreadLocalDemo();<br>            demoObject.PrintCounterValue();<br>            demoObject.IncrementCounter();<br>            demoObject.PrintCounterValue();</p>
+<pre><code>        var resetEvent = new ManualResetEvent(false);
+        ThreadPool.QueueUserWorkItem(state =&gt;
+        {
+
+            ((ThreadLocalDemo)state).PrintCounterValue();
+            ((ThreadLocalDemo)state).IncrementCounter();
+            ((ThreadLocalDemo)state).PrintCounterValue();
+
+
+            var demo = new ThreadLocalDemo();
+            demo.IncrementCounter();
+            demo.PrintCounterValue();
+
+            resetEvent.Set();
+        }, demoObject);
+
+        resetEvent.WaitOne();
+    }
+}
+
+public class ThreadLocalDemo
+{
+    private ThreadLocal&lt;int&gt; counter;
+    private static ThreadLocal&lt;int&gt; staticCounter;
+    private static Guid staticId;
+    private Guid id;
+
+    static ThreadLocalDemo()
+    {
+        staticCounter = new ThreadLocal&lt;int&gt;();
+        staticId = Guid.NewGuid();
+        Console.WriteLine($&quot;Static constructor:&quot;);
+        Console.WriteLine($&quot;thread id: {Thread.CurrentThread.ManagedThreadId}, type id: {staticId}&quot;);
+    }
+
+    public ThreadLocalDemo()
+    {
+        counter = new ThreadLocal&lt;int&gt;();
+        id = Guid.NewGuid();
+        Console.WriteLine($&quot;Constructor: thread id: {Thread.CurrentThread.ManagedThreadId}, object id {id}&quot;);
+    }
+
+    public void IncrementCounter()
+    {
+        Console.WriteLine(&quot;Incrementing both local and static counters&quot;);
+        counter.Value++;
+        staticCounter.Value++;
+    }
+
+    public void PrintCounterValue()
+    {
+        Console.WriteLine(&quot;Printing current values&quot;);
+        Console.WriteLine($&quot;thread id: {Thread.CurrentThread.ManagedThreadId}, object id {id}, counter: {counter.Value}, static Counter: {staticCounter.Value}&quot;);
+    }
+}`</code></pre><p>输出结果：<br><code>Static constructor:
+thread id: 1, type id: 220a1d54-0d32-4961-9f19-9da5a625eaeb
+Constructor: thread id: 1, object id a655a69c-4c16-4a6e-88b3-c339f247d895
+Printing current values
+thread id: 1, object id a655a69c-4c16-4a6e-88b3-c339f247d895, counter: 0, static Counter: 0
+Incrementing both local and static counters
+Printing current values
+thread id: 1, object id a655a69c-4c16-4a6e-88b3-c339f247d895, counter: 1, static Counter: 1
+Printing current values
+thread id: 4, object id a655a69c-4c16-4a6e-88b3-c339f247d895, counter: 0, static Counter: 0
+Incrementing both local and static counters
+Printing current values
+thread id: 4, object id a655a69c-4c16-4a6e-88b3-c339f247d895, counter: 1, static Counter: 1
+Constructor: thread id: 4, object id 3175a74e-255c-4934-ae9f-e9790d05e486
+Incrementing both local and static counters
+Printing current values
+thread id: 4, object id 3175a74e-255c-4934-ae9f-e9790d05e486, counter: 1, static Counter: 2</code></p>
+<p>上述代码，所在demoObj的实例计数器在Thread 1 为 1，但当进入到Thread 4 的时候，实例计数器被重置为0，也就是说<code>counter</code>的值受线程影响，不同的线程有不同的拷贝</p>
+<h2 id="具体应用"><a href="#具体应用" class="headerlink" title="具体应用"></a>具体应用</h2><p><code>ThreadLocal</code>目前在自己维护的项目中应用的比较少，大多数情况会选择在线程上下文中定义一个新的变量，而不是去引用外部的<code>ThreadLocal</code>变量，目前唯一用到的就是在RabbitMQ。</p>
+<p>根据RabbitMQ的官方文档，IModel对象不是一个线程安全的对象，每一个每一个线程应该有且只有一个IModel,建多了也没意义：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Don’t share channels between threads</span><br><span class="line">Use one channel per thread in your application, and make sure that you don’t share channels between threads as most clients don’t make channels thread-safe.</span><br><span class="line"></span><br><span class="line">CloudAMQP allows you to scale your instances to meet demand while providing mechanisms to troubleshoot leaks. If you have any questions, you can reach out to us at support@cloudamqp.com</span><br></pre></td></tr></table></figure>
+
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">public interface IMessagePublisher</span><br><span class="line">  &#123;</span><br><span class="line">      Task PublishAsync&lt;TMessage&gt;(TMessage message);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  public class MessagePublisher : IMessagePublisher</span><br><span class="line">  &#123;</span><br><span class="line"></span><br><span class="line">      private readonly ISerializer _serializer;</span><br><span class="line">      public MessagePublisher(ISerializer serializer, IConnectionFactory connectionFactory)</span><br><span class="line">      &#123;</span><br><span class="line">          _serializer &#x3D; serializer;</span><br><span class="line">          _channel &#x3D; new ThreadLocal&lt;IModel&gt;(() &#x3D;&gt; connectionFactory.CreateConnection().CreateModel());</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      public async Task PublishAsync&lt;TMessage&gt;(TMessage message)</span><br><span class="line">      &#123;</span><br><span class="line">          var type &#x3D; typeof(TMessage);</span><br><span class="line">          var exchangeName &#x3D; GetExchangeName(type);</span><br><span class="line">          var routingKey &#x3D; GetRoutingKey(type);</span><br><span class="line">          var data &#x3D; _serializer.Serialize(message);</span><br><span class="line"></span><br><span class="line">          await PublishAsync(exchangeName, routingKey, data);</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">   services.AddSingleton&lt;IMessagePublisher, MessagePublisher&gt;();</span><br></pre></td></tr></table></figure>
+
+<p>通过上述代码，虽然IMessagePublisher是单例，但channel也可以实现做到每一个线程唯一，最大程度的减少了对象的创建</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="https://www.cloudamqp.com/blog/2019-11-13-the-relationship-between-connections-and-channels-in-rabbitmq.html" target="_blank" rel="noopener">What is the relationship between connections and channels in RabbitMQ?</a></p>
+
+        
+        <br />
+        <div id="comment-container">
+        </div>
+        <div id="disqus_thread"></div>
+
+        <div id="lv-container">
+        </div>
+
+    </div>
+</div>
+
+    </div>
+</div>
+
+
+<footer class="footer">
+    <ul class="list-inline text-center">
+        
+        <li>
+            <a target="_blank" href="https://twitter.com/RebornXu">
+                            <span class="fa-stack fa-lg">
+                                <i class="iconfont icon-twitter"></i>
+                            </span>
+            </a>
+        </li>
+        
+        
+
+        
+        <li>
+            <a target="_blank" href="http://weibo.com/2016115931">
+                            <span class="fa-stack fa-lg">
+                                  <i class="iconfont icon-weibo"></i>
+                            </span>
+            </a>
+        </li>
+        
+
+        
+
+        
+        <li>
+            <a target="_blank"  href="https://github.com/loremipsumsharp">
+                            <span class="fa-stack fa-lg">
+                                <i class="iconfont icon-github"></i>
+                            </span>
+            </a>
+        </li>
+        
+
+        
+
+    </ul>
+    
+    <p>
+        <span id="busuanzi_container_site_pv">
+            <span id="busuanzi_value_site_pv"></span>PV
+        </span>
+        <span id="busuanzi_container_site_uv">
+            <span id="busuanzi_value_site_uv"></span>UV
+        </span>
+        Created By <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>  Theme <a href="https://github.com/aircloud/hexo-theme-aircloud" target="_blank" rel="noopener">AirCloud</a></p>
+</footer>
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-158639013-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-158639013-1');
+</script>
+
+
+</body>
+
+<script>
+    // We expose some of the variables needed by the front end
+    window.hexo_search_path = "search.json"
+    window.hexo_root = "/"
+    window.isPost = true
+</script>
+<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+
+<script src="/js/index.js"></script>
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+    <script type="text/javascript">
+       (function() {
+           if (typeof LivereTower === 'function') { return; }
+
+           var j, d = document.getElementById('lv-container');
+
+           d.setAttribute('data-id','city');
+           d.setAttribute('data-uid' , 'MTAyMC80ODY1NC8yNTE0OA');
+
+           j = document.createElement('script');
+           j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+           j.async = true;
+
+           d.appendChild(j);
+       })();
+    </script>
+    <noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+    </div>
+
+</html>
