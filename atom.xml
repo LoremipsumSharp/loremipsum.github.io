@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://loremipsumsharp.github.io/"/>
-  <updated>2020-09-13T17:29:49.768Z</updated>
+  <updated>2020-09-20T19:26:57.476Z</updated>
   <id>https://loremipsumsharp.github.io/</id>
   
   <author>
@@ -15,6 +15,29 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Union查询性能优</title>
+    <link href="https://loremipsumsharp.github.io/2020/09/21/Union%E6%9F%A5%E8%AF%A2%E6%80%A7%E8%83%BD%E4%BC%98/"/>
+    <id>https://loremipsumsharp.github.io/2020/09/21/Union%E6%9F%A5%E8%AF%A2%E6%80%A7%E8%83%BD%E4%BC%98/</id>
+    <published>2020-09-20T18:58:22.193Z</published>
+    <updated>2020-09-20T19:26:57.476Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="Union的工作原理"><a href="#Union的工作原理" class="headerlink" title="Union的工作原理"></a>Union的工作原理</h2><p>假设现在有两个集合A：</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">blue</span><br><span class="line">green</span><br><span class="line">gray</span><br><span class="line">black</span><br></pre></td></tr></table></figure><p>集合B：</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">red</span><br><span class="line">green</span><br><span class="line">yellow</span><br><span class="line">blue</span><br></pre></td></tr></table></figure><p>现在对集合A、B进行Union操作，首先Mysql会创建一个临时表来暂存A ∪ B = C<br>Step1(将A的元素和B的元素都添加到C中)</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">black</span><br><span class="line">blue</span><br><span class="line">blue</span><br><span class="line">gray</span><br><span class="line">green</span><br><span class="line">green</span><br><span class="line">red</span><br><span class="line">yellow</span><br></pre></td></tr></table></figure><p>接下来对C进行去重，得到：</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">black</span><br><span class="line">blue</span><br><span class="line">gray</span><br><span class="line">green</span><br><span class="line">red</span><br><span class="line">yellow</span><br></pre></td></tr></table></figure><h2 id="如何优化"><a href="#如何优化" class="headerlink" title="如何优化"></a>如何优化</h2><h3 id="使用Union-All"><a href="#使用Union-All" class="headerlink" title="使用Union All"></a>使用Union All</h3><p>对一个大数据集进行去重操作需要很高的算力，当业务场景可以接收重复结果的情况下，使用Union All，Union All不会对结果集进行去重，这个时候可以减少Union去重带来的性能损耗</p><h3 id="将查询条件放在Union的子查询中"><a href="#将查询条件放在Union的子查询中" class="headerlink" title="将查询条件放在Union的子查询中"></a>将查询条件放在Union的子查询中</h3><p>如果不将查询条件放在子查询之中，这个时候默认Union将各个子查询的结果全部查出来，然后放到一个临时表中，再对临时表进行过滤，这个时候，没办法利用到Mysql的索引，不利于性能的提高。所以使用Union操作的时候要尽量将查询条件，排序条件放在子查询之中。<br>另外需要注意的一点是，如果直接对子查询进行Order By操作，Mysql会提示<code>Incorrect usage of UNION and ORDER BY</code>,如：</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">SELECT * FROM t1 WHERE username LIKE &#39;l%&#39; ORDER BY score ASC</span><br><span class="line">UNION</span><br><span class="line">SELECT * FROM t1 WHERE username LIKE &#39;%m%&#39; ORDER BY score ASC</span><br></pre></td></tr></table></figure><p>解决的办法就是用一个括号将子查询包起来，再进行Union操作：</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">(SELECT * FROM t1 WHERE username LIKE &#39;l%&#39; ORDER BY sroce ASC)</span><br><span class="line">UNION</span><br><span class="line">(SELECT * FROM t1 WHERE username LIKE &#39;%m%&#39; ORDER BY score ASC)</span><br></pre></td></tr></table></figure><h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="https://www.jb51.net/article/99842.htm" target="_blank" rel="noopener">MySQL中union和order by同时使用的实现方法</a></p><p><a href="https://www.iheavy.com/2013/06/13/how-to-optimize-mysql-union-for-high-speed/" target="_blank" rel="noopener">How to Optimize MySQL UNION For High Speed</a></p>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h2 id=&quot;Union的工作原理&quot;&gt;&lt;a href=&quot;#Union的工作原理&quot; class=&quot;headerlink&quot; title=&quot;Union的工作原理&quot;&gt;&lt;/a&gt;Union的工作原理&lt;/h2&gt;&lt;p&gt;假设现在有两个集合A：&lt;/p&gt;
+&lt;figure class=&quot;highlig
+      
+    
+    </summary>
+    
+    
+    
+  </entry>
   
   <entry>
     <title>ThreadLocal的应用</title>
@@ -253,29 +276,6 @@
       
         &lt;p&gt;本周将公司的运营系统从AspNetCore2.1升级到了AspNetCore3.1,遇到了一些坑，这里记录以下&lt;/p&gt;
 &lt;h2 id=&quot;2-1的相关CORS代码&quot;&gt;&lt;a href=&quot;#2-1的相关CORS代码&quot; class=&quot;headerlink&quot; title=&quot;2.1的相
-      
-    
-    </summary>
-    
-    
-    
-  </entry>
-  
-  <entry>
-    <title>Union查询性能优</title>
-    <link href="https://loremipsumsharp.github.io/2020/02/27/Union%E6%9F%A5%E8%AF%A2%E6%80%A7%E8%83%BD%E4%BC%98/"/>
-    <id>https://loremipsumsharp.github.io/2020/02/27/Union%E6%9F%A5%E8%AF%A2%E6%80%A7%E8%83%BD%E4%BC%98/</id>
-    <published>2020-02-27T12:05:33.000Z</published>
-    <updated>2020-09-20T19:24:54.458Z</updated>
-    
-    <content type="html"><![CDATA[<h2 id="Union的工作原理"><a href="#Union的工作原理" class="headerlink" title="Union的工作原理"></a>Union的工作原理</h2><p>假设现在有两个集合A：</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">blue</span><br><span class="line">green</span><br><span class="line">gray</span><br><span class="line">black</span><br></pre></td></tr></table></figure><p>集合B：</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">red</span><br><span class="line">green</span><br><span class="line">yellow</span><br><span class="line">blue</span><br></pre></td></tr></table></figure><p>现在对集合A、B进行Union操作，首先Mysql会创建一个临时表来暂存A ∪ B = C<br>Step1(将A的元素和B的元素都添加到C中)</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">black</span><br><span class="line">blue</span><br><span class="line">blue</span><br><span class="line">gray</span><br><span class="line">green</span><br><span class="line">green</span><br><span class="line">red</span><br><span class="line">yellow</span><br></pre></td></tr></table></figure><p>接下来对C进行去重，得到：</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">black</span><br><span class="line">blue</span><br><span class="line">gray</span><br><span class="line">green</span><br><span class="line">red</span><br><span class="line">yellow</span><br></pre></td></tr></table></figure><h2 id="如何优化"><a href="#如何优化" class="headerlink" title="如何优化"></a>如何优化</h2><h3 id="使用Union-All"><a href="#使用Union-All" class="headerlink" title="使用Union All"></a>使用Union All</h3><p>对一个大数据集进行去重操作需要很高的算力，当业务场景可以接收重复结果的情况下，使用Union All，Union All不会对结果集进行去重，这个时候可以减少Union去重带来的性能损耗</p><h3 id="将查询条件放在Union的子查询中"><a href="#将查询条件放在Union的子查询中" class="headerlink" title="将查询条件放在Union的子查询中"></a>将查询条件放在Union的子查询中</h3><p>如果不将查询条件放在子查询之中，这个时候默认Union将各个子查询的结果全部查出来，然后放到一个临时表中，再对临时表进行过滤，这个时候，没办法利用到Mysql的索引，不利于性能的提高。所以使用Union操作的时候要尽量将查询条件，排序条件放在子查询之中。<br>另外需要注意的一点是，如果直接对子查询进行Order By操作，Mysql会提示<code>Incorrect usage of UNION and ORDER BY</code>,如：</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">SELECT * FROM t1 WHERE username LIKE &#39;l%&#39; ORDER BY score ASC</span><br><span class="line">UNION</span><br><span class="line">SELECT * FROM t1 WHERE username LIKE &#39;%m%&#39; ORDER BY score ASC</span><br></pre></td></tr></table></figure><p>解决的办法就是用一个括号将子查询包起来，再进行Union操作：</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">(SELECT * FROM t1 WHERE username LIKE &#39;l%&#39; ORDER BY sroce ASC)</span><br><span class="line">UNION</span><br><span class="line">(SELECT * FROM t1 WHERE username LIKE &#39;%m%&#39; ORDER BY score ASC)</span><br></pre></td></tr></table></figure><h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="https://www.jb51.net/article/99842.htm" target="_blank" rel="noopener">MySQL中union和order by同时使用的实现方法</a></p><p><a href="https://www.iheavy.com/2013/06/13/how-to-optimize-mysql-union-for-high-speed/" target="_blank" rel="noopener">How to Optimize MySQL UNION For High Speed</a></p>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;h2 id=&quot;Union的工作原理&quot;&gt;&lt;a href=&quot;#Union的工作原理&quot; class=&quot;headerlink&quot; title=&quot;Union的工作原理&quot;&gt;&lt;/a&gt;Union的工作原理&lt;/h2&gt;&lt;p&gt;假设现在有两个集合A：&lt;/p&gt;
-&lt;figure class=&quot;highlig
       
     
     </summary>
