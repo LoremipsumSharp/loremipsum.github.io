@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="keyword"  content="">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>
+        
+        Union查询性能优 - Loremipsum Blog
+        
+    </title>
+
+    <!-- Custom CSS -->
+    
+<link rel="stylesheet" href="/css/aircloud.css">
+
+    
+<link rel="stylesheet" href="/css/gitment.css">
+
+    <!--<link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">-->
+    <link href="//at.alicdn.com/t/font_620856_pl6z7sid89qkt9.css" rel="stylesheet" type="text/css">
+    <!-- ga & ba script hoook -->
+    <script></script>
+<meta name="generator" content="Hexo 4.2.0"><link rel="alternate" href="/atom.xml" title="Loremipsum Blog" type="application/atom+xml">
+</head>
+
+<body>
+
+<div class="site-nav-toggle" id="site-nav-toggle">
+    <button>
+        <span class="btn-bar"></span>
+        <span class="btn-bar"></span>
+        <span class="btn-bar"></span>
+    </button>
+</div>
+
+<div class="index-about">
+    <i> Things always get worse before they get better. </i>
+</div>
+
+<div class="index-container">
+    
+    <div class="index-left">
+        
+<div class="nav" id="nav">
+    <div class="avatar-name">
+        <div class="avatar ">
+            <img src="/img/avatar.jpg" />
+        </div>
+        <div class="name">
+            <i>Loremipsum</i>
+        </div>
+    </div>
+    <div class="contents" id="nav-content">
+        <ul>
+            <li >
+                <a href="/">
+                    <i class="iconfont icon-shouye1"></i>
+                    <span>主页</span>
+                </a>
+            </li>
+            <li >
+                <a href="/tags">
+                    <i class="iconfont icon-biaoqian1"></i>
+                    <span>标签</span>
+                </a>
+            </li>
+            <li >
+                <a href="/archives">
+                    <i class="iconfont icon-guidang2"></i>
+                    <span>存档</span>
+                </a>
+            </li>
+            <li >
+                <a href="/about/">
+                    <i class="iconfont icon-guanyu2"></i>
+                    <span>关于</span>
+                </a>
+            </li>
+            
+            <li>
+                <a id="search">
+                    <i class="iconfont icon-sousuo1"></i>
+                    <span>搜索</span>
+                </a>
+            </li>
+            
+        </ul>
+    </div>
+    
+        <div id="toc" class="toc-article">
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Union的工作原理"><span class="toc-text">Union的工作原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#如何优化"><span class="toc-text">如何优化</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#使用Union-All"><span class="toc-text">使用Union All</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#将查询条件放在Union的子查询中"><span class="toc-text">将查询条件放在Union的子查询中</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-text">参考</span></a></li></ol>
+</div>
+    
+</div>
+
+
+<div class="search-field" id="search-field">
+    <div class="search-container">
+        <div class="search-input">
+            <span id="esc-search"> <i class="icon-fanhui iconfont"></i></span>
+            <input id="search-input"/>
+            <span id="begin-search">搜索</span>
+        </div>
+        <div class="search-result-container" id="search-result-container">
+
+        </div>
+    </div>
+</div>
+
+        <div class="index-about-mobile">
+            <i> Things always get worse before they get better. </i>
+        </div>
+    </div>
+    
+    <div class="index-middle">
+        <!-- Main Content -->
+        
+
+
+<div class="post-container">
+    <div class="post-title">
+        Union查询性能优
+    </div>
+
+    <div class="post-meta">
+        <span class="attr">发布于：<span>2020-02-27 20:05:33</span></span>
+        
+        </span>
+        <span class="attr">访问：<span id="busuanzi_value_page_pv"></span>
+</span>
+</span>
+    </div>
+    <div class="post-content ">
+        <h2 id="Union的工作原理"><a href="#Union的工作原理" class="headerlink" title="Union的工作原理"></a>Union的工作原理</h2><p>假设现在有两个集合A：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">blue</span><br><span class="line">green</span><br><span class="line">gray</span><br><span class="line">black</span><br></pre></td></tr></table></figure>
+<p>集合B：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">red</span><br><span class="line">green</span><br><span class="line">yellow</span><br><span class="line">blue</span><br></pre></td></tr></table></figure>
+<p>现在对集合A、B进行Union操作，首先Mysql会创建一个临时表来暂存A ∪ B = C<br>Step1(将A的元素和B的元素都添加到C中)</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">black</span><br><span class="line">blue</span><br><span class="line">blue</span><br><span class="line">gray</span><br><span class="line">green</span><br><span class="line">green</span><br><span class="line">red</span><br><span class="line">yellow</span><br></pre></td></tr></table></figure>
+
+<p>接下来对C进行去重，得到：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">black</span><br><span class="line">blue</span><br><span class="line">gray</span><br><span class="line">green</span><br><span class="line">red</span><br><span class="line">yellow</span><br></pre></td></tr></table></figure>
+
+<h2 id="如何优化"><a href="#如何优化" class="headerlink" title="如何优化"></a>如何优化</h2><h3 id="使用Union-All"><a href="#使用Union-All" class="headerlink" title="使用Union All"></a>使用Union All</h3><p>对一个大数据集进行去重操作需要很高的算力，当业务场景可以接收重复结果的情况下，使用Union All，Union All不会对结果集进行去重，这个时候可以减少Union去重带来的性能损耗</p>
+<h3 id="将查询条件放在Union的子查询中"><a href="#将查询条件放在Union的子查询中" class="headerlink" title="将查询条件放在Union的子查询中"></a>将查询条件放在Union的子查询中</h3><p>如果不将查询条件放在子查询之中，这个时候默认Union将各个子查询的结果全部查出来，然后放到一个临时表中，再对临时表进行过滤，这个时候，没办法利用到Mysql的索引，不利于性能的提高。所以使用Union操作的时候要尽量将查询条件，排序条件放在子查询之中。<br>另外需要注意的一点是，如果直接对子查询进行Order By操作，Mysql会提示<code>Incorrect usage of UNION and ORDER BY</code>,如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">SELECT * FROM t1 WHERE username LIKE &#39;l%&#39; ORDER BY score ASC</span><br><span class="line">UNION</span><br><span class="line">SELECT * FROM t1 WHERE username LIKE &#39;%m%&#39; ORDER BY score ASC</span><br></pre></td></tr></table></figure>
+
+<p>解决的办法就是用一个括号将子查询包起来，再进行Union操作：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">(SELECT * FROM t1 WHERE username LIKE &#39;l%&#39; ORDER BY sroce ASC)</span><br><span class="line">UNION</span><br><span class="line">(SELECT * FROM t1 WHERE username LIKE &#39;%m%&#39; ORDER BY score ASC)</span><br></pre></td></tr></table></figure>
+
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="https://www.jb51.net/article/99842.htm" target="_blank" rel="noopener">MySQL中union和order by同时使用的实现方法</a></p>
+<p><a href="https://www.iheavy.com/2013/06/13/how-to-optimize-mysql-union-for-high-speed/" target="_blank" rel="noopener">How to Optimize MySQL UNION For High Speed</a></p>
+
+        
+        <br />
+        <div id="comment-container">
+        </div>
+        <div id="disqus_thread"></div>
+
+        <div id="lv-container">
+        </div>
+
+    </div>
+</div>
+
+    </div>
+</div>
+
+
+<footer class="footer">
+    <ul class="list-inline text-center">
+        
+        <li>
+            <a target="_blank" href="https://twitter.com/RebornXu">
+                            <span class="fa-stack fa-lg">
+                                <i class="iconfont icon-twitter"></i>
+                            </span>
+            </a>
+        </li>
+        
+        
+
+        
+        <li>
+            <a target="_blank" href="http://weibo.com/2016115931">
+                            <span class="fa-stack fa-lg">
+                                  <i class="iconfont icon-weibo"></i>
+                            </span>
+            </a>
+        </li>
+        
+
+        
+
+        
+        <li>
+            <a target="_blank"  href="https://github.com/loremipsumsharp">
+                            <span class="fa-stack fa-lg">
+                                <i class="iconfont icon-github"></i>
+                            </span>
+            </a>
+        </li>
+        
+
+        
+
+    </ul>
+    
+    <p>
+        <span id="busuanzi_container_site_pv">
+            <span id="busuanzi_value_site_pv"></span>PV
+        </span>
+        <span id="busuanzi_container_site_uv">
+            <span id="busuanzi_value_site_uv"></span>UV
+        </span>
+        Created By <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>  Theme <a href="https://github.com/aircloud/hexo-theme-aircloud" target="_blank" rel="noopener">AirCloud</a></p>
+</footer>
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-158639013-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-158639013-1');
+</script>
+
+
+</body>
+
+<script>
+    // We expose some of the variables needed by the front end
+    window.hexo_search_path = "search.json"
+    window.hexo_root = "/"
+    window.isPost = true
+</script>
+<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+
+<script src="/js/index.js"></script>
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+    <script type="text/javascript">
+       (function() {
+           if (typeof LivereTower === 'function') { return; }
+
+           var j, d = document.getElementById('lv-container');
+
+           d.setAttribute('data-id','city');
+           d.setAttribute('data-uid' , 'MTAyMC80ODY1NC8yNTE0OA');
+
+           j = document.createElement('script');
+           j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+           j.async = true;
+
+           d.appendChild(j);
+       })();
+    </script>
+    <noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+    </div>
+
+</html>
