@@ -11,7 +11,7 @@
 
     <title>
         
-        Loremipsum Blog
+        Grpc Channel没有关闭而导致的内存泄露问题排查 - Loremipsum Blog
         
     </title>
 
@@ -58,7 +58,7 @@
     </div>
     <div class="contents" id="nav-content">
         <ul>
-            <li  class=active >
+            <li >
                 <a href="/">
                     <i class="iconfont icon-shouye1"></i>
                     <span>主页</span>
@@ -93,6 +93,10 @@
         </ul>
     </div>
     
+        <div id="toc" class="toc-article">
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#背景"><span class="toc-text">背景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#分析"><span class="toc-text">分析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-text">参考</span></a></li></ol>
+</div>
+    
 </div>
 
 
@@ -117,157 +121,62 @@
     <div class="index-middle">
         <!-- Main Content -->
         
-<div class="post-preview-container" style="min-height: 648px">
-    
-    <div class="post-preview">
-        <div class="post-time">2020-09-22</div>
-        <div class="post-info">
-            <a href="/2020/09/22/GrpcChannel没有正常关闭而导致的内存泄露问题排查/">
-                <h3>
-                    Grpc Channel没有关闭而导致的内存泄露问题排查
-                </h3>
-            </a>
-            <p>
-                
-            </p>
-        </div>
+
+
+<div class="post-container">
+    <div class="post-title">
+        Grpc Channel没有关闭而导致的内存泄露问题排查
     </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2020-09-21</div>
-        <div class="post-info">
-            <a href="/2020/09/21/Union查询性能优/">
-                <h3>
-                    Union查询性能优
-                </h3>
-            </a>
-            <p>
-                
-            </p>
-        </div>
+
+    <div class="post-meta">
+        <span class="attr">发布于：<span>2020-09-22 08:23:22</span></span>
+        
+        </span>
+        <span class="attr">访问：<span id="busuanzi_value_page_pv"></span>
+</span>
+</span>
     </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2020-09-14</div>
-        <div class="post-info">
-            <a href="/2020/09/14/ThreadLocal在RabbitMq中的应用/">
-                <h3>
-                    ThreadLocal的应用
-                </h3>
-            </a>
-            <p>
-                
-            </p>
+    <div class="post-content ">
+        <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>日前上线了一个用于统计统计用户活跃度的服务，上线之后，出现了内存泄漏的问题，通过lldb对程序的core dump进行分析，最终找到了泄漏的原因</p>
+<h2 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h2><p>服务上线后，出现大量告警，提示服务器内存不足，grafana监控提示服务内存泄漏：</p>
+<p><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/WeChat%20Screenshot_20200922084321.png" alt=""></p>
+<p>使用将线上的服务的内存dump下来，继续观察：</p>
+<figure class="highlight plain"><figcaption><span>-u 1```</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">通过lldb加载core dump文件：</span><br><span class="line"></span><br><span class="line">&#96;&#96;&#96;lldb-3.9 dotnet -c &#x2F;tmp&#x2F;20290824_activevalue_coredump  -o &quot;plugin load &#x2F;usr&#x2F;share&#x2F;dotnet&#x2F;shared&#x2F;Microsoft.NETCore.App&#x2F;2.1.1&#x2F;libsosplugin.so&quot;</span><br></pre></td></tr></table></figure>
+
+
+<p>查看堆大小：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">eeheap -gc</span><br></pre></td></tr></table></figure>
+<p><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/WeChat%20Screenshot_20200927023535.png" alt=""></p>
+<p>进一步查看当前堆各个类型的对象数量<br><code>dumpheap -stat</code></p>
+<p>提示有大量Grpc对象积压.</p>
+<p>进一步，对项目的各个接口进行压测,对内存进行三次采样：</p>
+<p>第一次采样77MB:</p>
+<p><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/dasdasdas.png" alt=""></p>
+<p>第二次采样82MB:</p>
+<p><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/2323fadas.png" alt=""></p>
+<p>第三次采样 86MB：</p>
+<p><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/adasdasgdfasdas.png" alt=""></p>
+<p>VS内存分析工具提示GRPC内存对象一直没有得到有效的控制，数量不断上升<br>在采样过程中手动进行GC，只是下降53个对象，大量channel仍然驻留内存:</p>
+<p><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/dasdasfdvfsdvsdf.png" alt=""></p>
+<p><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/dasdascas.png" alt=""></p>
+<p>根据上述采样分析，可以肯定业务代码中存在grpc channel正常关闭的场景。</p>
+<p>进一步查看代码发现：<br><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/WeChat%20Screenshot_20200927024147.png" alt=""></p>
+<p>每一次通过grpc client调用其他服务的时候会直接常见Channel，而不是复用之前的Channel，并且创建后的Channel没有关闭</p>
+<p>修复这部分代码后，线上内存使用率恢复正常</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="https://github.com/grpc/grpc-java/issues/3268" target="_blank" rel="noopener">Channel creation best practice</a></p>
+<p><a href="https://docs.microsoft.com/zh-cn/aspnet/core/grpc/performance?view=aspnetcore-5.0" target="_blank" rel="noopener">Performance best practices with gRPC</a></p>
+
+        
+        <br />
+        <div id="comment-container">
         </div>
-    </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2020-08-10</div>
-        <div class="post-info">
-            <a href="/2020/08/10/基于 kubernetes 的动态 jenkins slave的自动化发布/">
-                <h3>
-                    基于 kubernetes 的动态 jenkins slave的自动化发布
-                </h3>
-            </a>
-            <p>
-                
-            </p>
+        <div id="disqus_thread"></div>
+
+        <div id="lv-container">
         </div>
+
     </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2020-08-05</div>
-        <div class="post-info">
-            <a href="/2020/08/05/DNS的一些入门的基本概念/">
-                <h3>
-                    DNS的一些入门的基本概念
-                </h3>
-            </a>
-            <p>
-                
-            </p>
-        </div>
-    </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2020-07-16</div>
-        <div class="post-info">
-            <a href="/2020/07/16/内存管理中需要掌握的一些基本概念/">
-                <h3>
-                    .NET内存管理中需要掌握的一些基本概念(持续更新）
-                </h3>
-            </a>
-            <p>
-                
-            </p>
-        </div>
-    </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2020-07-05</div>
-        <div class="post-info">
-            <a href="/2020/07/05/Kafka流处理中自定义时间窗口/">
-                <h3>
-                    在Kafka流处理中自定义时间窗口
-                </h3>
-            </a>
-            <p>
-                
-            </p>
-        </div>
-    </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2020-06-25</div>
-        <div class="post-info">
-            <a href="/2020/06/25/如何安装特定版本的dotnet sdk/">
-                <h3>
-                    如何安装特定版本的dotnet sdk
-                </h3>
-            </a>
-            <p>
-                
-            </p>
-        </div>
-    </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2020-05-17</div>
-        <div class="post-info">
-            <a href="/2020/05/17/Spring Data MongoDb 通过Gradle集成QureyDSL的配置方法/">
-                <h3>
-                    Spring Data MongoDb 通过Gradle集成QureyDSL的配置方法
-                </h3>
-            </a>
-            <p>
-                
-            </p>
-        </div>
-    </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2020-04-27</div>
-        <div class="post-info">
-            <a href="/2020/04/27/使用ValueTask减少假异步代码引起的GC/">
-                <h3>
-                    使用ValueTask减少假异步代码引起的GC
-                </h3>
-            </a>
-            <p>
-                
-            </p>
-        </div>
-    </div>
-    
 </div>
-<ul class="pager">
-    
-    
-    <li class="next">
-        <a href="/page/2/">Older Posts &rarr;</a>
-    </li>
-    
-</ul>
 
     </div>
 </div>
@@ -339,7 +248,7 @@
     // We expose some of the variables needed by the front end
     window.hexo_search_path = "search.json"
     window.hexo_root = "/"
-    window.isPost = false
+    window.isPost = true
 </script>
 <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
 
@@ -349,5 +258,24 @@
 
 
 
+
+    <script type="text/javascript">
+       (function() {
+           if (typeof LivereTower === 'function') { return; }
+
+           var j, d = document.getElementById('lv-container');
+
+           d.setAttribute('data-id','city');
+           d.setAttribute('data-uid' , 'MTAyMC80ODY1NC8yNTE0OA');
+
+           j = document.createElement('script');
+           j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+           j.async = true;
+
+           d.appendChild(j);
+       })();
+    </script>
+    <noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+    </div>
 
 </html>
