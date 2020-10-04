@@ -141,12 +141,18 @@
 <h2 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h2><p>服务上线后，出现大量告警，提示服务器内存不足，grafana监控提示服务内存泄漏：</p>
 <p><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/WeChat%20Screenshot_20200922084321.png" alt=""></p>
 <p>使用将线上的服务的内存dump下来，继续观察：</p>
-<figure class="highlight plain"><figcaption><span>-u 1```</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">通过lldb加载core dump文件：</span><br></pre></td></tr></table></figure>
-<p>lldb-3.9 dotnet -c /tmp/20290824_activevalue_coredump  -o “plugin load /usr/share/dotnet/shared/Microsoft.NETCore.App/2.1.1/libsosplugin.so”</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"></span><br><span class="line">查看堆大小：</span><br></pre></td></tr></table></figure>
-<p>eeheap -gc</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">![](https:&#x2F;&#x2F;raw.githubusercontent.com&#x2F;LoremipsumSharp&#x2F;Images&#x2F;master&#x2F;img&#x2F;WeChat%20Screenshot_20200927023535.png)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">进一步查看当前堆各个类型的对象数量</span><br><span class="line">&#96;&#96;&#96; dumpheap -stat</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;usr&#x2F;share&#x2F;dotnet&#x2F;shared&#x2F;Microsoft.NETCore.App&#x2F;2.1.1&#x2F;createdump -u 1</span><br></pre></td></tr></table></figure>
 
+
+
+<p>通过lldb加载core dump文件：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">lldb-3.9 dotnet -c &#x2F;tmp&#x2F;20290824_activevalue_coredump  -o &quot;plugin load &#x2F;usr&#x2F;share&#x2F;dotnet&#x2F;shared&#x2F;Microsoft.NETCore.App&#x2F;2.1.1&#x2F;libsosplugin.so&quot;</span><br></pre></td></tr></table></figure>
+
+
+<p>查看堆大小：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">eeheap -gc</span><br></pre></td></tr></table></figure>
+<p><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/WeChat%20Screenshot_20200927023535.png" alt=""></p>
+<p>进一步查看当前堆各个类型的对象数量<br><code>dumpheap -stat</code></p>
 <p>提示有大量Grpc对象积压.</p>
 <p>进一步，对项目的各个接口进行压测,对内存进行三次采样：</p>
 <p>第一次采样77MB:</p>
