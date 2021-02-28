@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="keyword"  content="">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>
+        
+        使用dotnet template engine创建项目模板 - Loremipsum Blog
+        
+    </title>
+
+    <!-- Custom CSS -->
+    
+<link rel="stylesheet" href="/css/aircloud.css">
+
+    
+<link rel="stylesheet" href="/css/gitment.css">
+
+    <!--<link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">-->
+    <link href="//at.alicdn.com/t/font_620856_pl6z7sid89qkt9.css" rel="stylesheet" type="text/css">
+    <!-- ga & ba script hoook -->
+    <script></script>
+<meta name="generator" content="Hexo 4.2.0"><link rel="alternate" href="/atom.xml" title="Loremipsum Blog" type="application/atom+xml">
+</head>
+
+<body>
+
+<div class="site-nav-toggle" id="site-nav-toggle">
+    <button>
+        <span class="btn-bar"></span>
+        <span class="btn-bar"></span>
+        <span class="btn-bar"></span>
+    </button>
+</div>
+
+<div class="index-about">
+    <i> Things always get worse before they get better. </i>
+</div>
+
+<div class="index-container">
+    
+    <div class="index-left">
+        
+<div class="nav" id="nav">
+    <div class="avatar-name">
+        <div class="avatar ">
+            <img src="/img/avatar.jpg" />
+        </div>
+        <div class="name">
+            <i>Loremipsum</i>
+        </div>
+    </div>
+    <div class="contents" id="nav-content">
+        <ul>
+            <li >
+                <a href="/">
+                    <i class="iconfont icon-shouye1"></i>
+                    <span>主页</span>
+                </a>
+            </li>
+            <li >
+                <a href="/tags">
+                    <i class="iconfont icon-biaoqian1"></i>
+                    <span>标签</span>
+                </a>
+            </li>
+            <li >
+                <a href="/archives">
+                    <i class="iconfont icon-guidang2"></i>
+                    <span>存档</span>
+                </a>
+            </li>
+            <li >
+                <a href="/about/">
+                    <i class="iconfont icon-guanyu2"></i>
+                    <span>关于</span>
+                </a>
+            </li>
+            
+            <li>
+                <a id="search">
+                    <i class="iconfont icon-sousuo1"></i>
+                    <span>搜索</span>
+                </a>
+            </li>
+            
+        </ul>
+    </div>
+    
+        <div id="toc" class="toc-article">
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#背景"><span class="toc-text">背景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#模板配置"><span class="toc-text">模板配置</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#前置工作"><span class="toc-text">前置工作</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#sourceName"><span class="toc-text">sourceName</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#preferNameDirectory"><span class="toc-text">preferNameDirectory</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#symbol-特殊变量替换"><span class="toc-text">symbol 特殊变量替换</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#小结"><span class="toc-text">小结</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#模板发布、安装、卸载"><span class="toc-text">模板发布、安装、卸载</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-text">参考</span></a></li></ol>
+</div>
+    
+</div>
+
+
+<div class="search-field" id="search-field">
+    <div class="search-container">
+        <div class="search-input">
+            <span id="esc-search"> <i class="icon-fanhui iconfont"></i></span>
+            <input id="search-input"/>
+            <span id="begin-search">搜索</span>
+        </div>
+        <div class="search-result-container" id="search-result-container">
+
+        </div>
+    </div>
+</div>
+
+        <div class="index-about-mobile">
+            <i> Things always get worse before they get better. </i>
+        </div>
+    </div>
+    
+    <div class="index-middle">
+        <!-- Main Content -->
+        
+
+
+<div class="post-container">
+    <div class="post-title">
+        使用dotnet template engine创建项目模板
+    </div>
+
+    <div class="post-meta">
+        <span class="attr">发布于：<span>2021-03-01 01:21:04</span></span>
+        
+        </span>
+        <span class="attr">访问：<span id="busuanzi_value_page_pv"></span>
+</span>
+</span>
+    </div>
+    <div class="post-content ">
+        <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>dotnet sdk安装后默认配套了若干开发模板，使用dotnet new 命令可以让开发者快速通过开发模板搭建项目。这些内置的开发模板基本可以满足日常的开发需求，但是对于一些特定场景，比如开发者想在Abp的基础上快速搭建项目，那么必须利用 <a href="https://github.com/dotnet/templating" target="_blank" rel="noopener">dotnet template engine</a>    来进行模板的定制化开发</p>
+<p>其实在dotnet core出来之前，比较流行的的代码自动生成的方式是利用Visual Studio内置的 <a href="https://docs.microsoft.com/en-us/visualstudio/modeling/code-generation-and-t4-text-templates?view=vs-2019" target="_blank" rel="noopener">T4模板引擎</a>  如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line">&lt;#@ template debug&#x3D;&quot;true&quot; hostSpecific&#x3D;&quot;true&quot; #&gt;</span><br><span class="line">&lt;#@ output extension&#x3D;&quot;.cs&quot; #&gt;</span><br><span class="line">&lt;#@ Assembly Name&#x3D;&quot;System.Core&quot; #&gt;</span><br><span class="line">&lt;#@ Assembly Name&#x3D;&quot;System.Windows.Forms&quot; #&gt;</span><br><span class="line">&lt;#@ assembly name&#x3D;&quot;EnvDTE&quot; #&gt;  </span><br><span class="line">&lt;#@ import namespace&#x3D;&quot;EnvDTE&quot; #&gt;  </span><br><span class="line">&lt;#@ import namespace&#x3D;&quot;System&quot; #&gt;</span><br><span class="line">&lt;#@ import namespace&#x3D;&quot;System.IO&quot; #&gt;</span><br><span class="line">&lt;#@ import namespace&#x3D;&quot;System.Diagnostics&quot; #&gt;</span><br><span class="line">&lt;#@ import namespace&#x3D;&quot;System.Linq&quot; #&gt;</span><br><span class="line">&lt;#@ import namespace&#x3D;&quot;System.Collections&quot; #&gt;</span><br><span class="line">&lt;#@ import namespace&#x3D;&quot;System.Collections.Generic&quot; #&gt; </span><br><span class="line">&lt;#&#x2F;&#x2F;修改using #&gt;</span><br><span class="line">using AAM.ProductManagement.Core.Models.ProductManagement;</span><br><span class="line">using AAM.ProductManagement.Core.IRepository;</span><br><span class="line">using AAM.Repository.EntityFramework;</span><br><span class="line">&lt;#&#x2F;&#x2F;修改命名空间#&gt;</span><br><span class="line">namespace AAM.ProductManagement.Repository</span><br><span class="line">&#123;</span><br><span class="line">&lt;#</span><br><span class="line">   &#x2F;&#x2F; insert your template code here the template code will be syntax highlighted </span><br><span class="line">   &#x2F;&#x2F; and you will have intellisense for all namespaces in the full edition</span><br><span class="line">   string solutionsPath &#x3D; Host.ResolveAssemblyReference(&quot;$(SolutionDir)&quot;);  </span><br><span class="line">   &#x2F;&#x2F;修改此处路径即可生成实体</span><br><span class="line">   string modelDir&#x3D;solutionsPath+&quot;\\AAM.ProductManagement.Core\\Models\\ProductManagement\\&quot;;</span><br><span class="line">   string [] filesPaths&#x3D;Directory.GetFiles(modelDir,&quot;*&quot;,SearchOption.AllDirectories);</span><br><span class="line"></span><br><span class="line">    foreach (var item in filesPaths)</span><br><span class="line">    &#123;</span><br><span class="line">		FileInfo file&#x3D;new FileInfo(item);</span><br><span class="line">		string className&#x3D;file.Name.Replace(&quot;.cs&quot;,&quot;&quot;);</span><br><span class="line">		if(className.EndsWith(&quot;Context&quot;)) continue;</span><br><span class="line">		#&gt;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">	public partial class &lt;#&#x3D; className #&gt;Repository: RepositoryBase&lt;&lt;#&#x3D; className #&gt;&gt;, I&lt;#&#x3D; className #&gt;Repository</span><br><span class="line">	&#123;</span><br><span class="line">		public &lt;#&#x3D; className #&gt;Repository(IProductManagementUnitOfWork unitOfWork):base(unitOfWork)</span><br><span class="line">		&#123;</span><br><span class="line"></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">		&lt;#</span><br><span class="line">	&#125;</span><br><span class="line">#&gt;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这是一个用于快速生成仓储代码的模板。模板代码看起来相当复杂，如果不熟悉T4的语法，基本上是无法看懂，并且这种模板是无法直接调试的，你压根不知道你写的有没有问题，只有把整个模板渲染出来后才再编译一下才知道有没有问题。</p>
+<p>总结一下，2个问题：</p>
+<ol>
+<li>调试不方便</li>
+<li>有一定维护成本及学习成本</li>
+</ol>
+<p>为了解决上述问题，dotnet template engine用了另外一种思路：</p>
+<p><strong>模板即代码</strong></p>
+<p>你开发的模板首先必须是一个可以编译运行的代码，其次他才是一个模板。</p>
+<h2 id="模板配置"><a href="#模板配置" class="headerlink" title="模板配置"></a>模板配置</h2><h3 id="前置工作"><a href="#前置工作" class="headerlink" title="前置工作"></a>前置工作</h3><p>每一个模板项目的根目录都必须有一个.template.config目录,再这个目录下面必须有一个template.json配置问题，如下：</p>
+<table>
+<thead>
+<tr>
+<th>Member</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>$schema</code></td>
+<td>URI</td>
+<td>The JSON schema for the <em>template.json</em> file. Editors that support JSON schemas enable JSON-editing features when the schema is specified. For example, <a href="https://code.visualstudio.com/" target="_blank" rel="noopener">Visual Studio Code</a> requires this member to enable IntelliSense. Use a value of <code>http://json.schemastore.org/template</code>.</td>
+</tr>
+<tr>
+<td><code>author</code></td>
+<td>string</td>
+<td>The author of the template.</td>
+</tr>
+<tr>
+<td><code>classifications</code></td>
+<td>array(string)</td>
+<td>Zero or more characteristics of the template that a user might use to find the template when searching for it. The classifications also appear in the <em>Tags</em> column when it appears in a list of templates produced by using the `dotnet new -l</td>
+</tr>
+<tr>
+<td><code>identity</code></td>
+<td>string</td>
+<td>A unique name for this template.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>string</td>
+<td>The name for the template that users should see.</td>
+</tr>
+<tr>
+<td><code>shortName</code></td>
+<td>string</td>
+<td>A default shorthand name for selecting the template that applies to environments where the template name is specified by the user, not selected via a GUI. For example, the short name is useful when using templates from a command prompt with CLI commands.</td>
+</tr>
+<tr>
+<td><code>sourceName</code></td>
+<td>string</td>
+<td>The name in the source tree to replace with the name the user specifies. The template engine will look for any occurrence of the <code>sourceName</code> mentioned in the config file and replace it in file names and file contents. The value to be replaced with can be given using the <code>-n</code> or <code>--name</code> options while running a template. If no name is specified, the current directory is used.</td>
+</tr>
+<tr>
+<td><code>preferNameDirectory</code></td>
+<td>boolean</td>
+<td>Indicates whether to create a directory for the template if name is specified but an output directory is not set (instead of creating the content directly in the current directory). The default value is false.</td>
+</tr>
+</tbody></table>
+<p>这个是template.json配置中各个字段的简要说明，下面会对几个关键字段进行介绍</p>
+<h3 id="sourceName"><a href="#sourceName" class="headerlink" title="sourceName"></a>sourceName</h3><p>如果将sourceName定义为AAA，那么在这个模板中所有以打头AAA文件名或包含AAA文本内容都会被自动替换掉，如</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dotnet new -n BBB</span><br></pre></td></tr></table></figure>
+<p>那么 AAA会被替换为BBB，相关文件也会被重命名。一般来讲，sourceName的值就是模板文件中的csproj文件名或者sln文件名</p>
+<h3 id="preferNameDirectory"><a href="#preferNameDirectory" class="headerlink" title="preferNameDirectory"></a>preferNameDirectory</h3><p>这个值一般会配置为true，eg：如果我在CCC目录下执行dotnet new命令，相当于 dotnet new  -n CCC</p>
+<h3 id="symbol-特殊变量替换"><a href="#symbol-特殊变量替换" class="headerlink" title="symbol 特殊变量替换"></a>symbol 特殊变量替换</h3><p>上述两点并没有彻底解决变量替换的问题，我们需要让一些我们自己定义的变量也能够被替换掉，这个时候需要使用symbol配置,</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">&quot;symbols&quot;: &#123;</span><br><span class="line">        &quot;protoPackage&quot;: &#123;</span><br><span class="line">            &quot;type&quot;: &quot;parameter&quot;,</span><br><span class="line">            &quot;replaces&quot;: &quot;_ProtoPackage_&quot;,</span><br><span class="line">            &quot;datatype&quot;: &quot;text&quot;,</span><br><span class="line">            &quot;isRequired&quot;: true,</span><br><span class="line">            &quot;description&quot;: &quot;Provide the proto package name&quot;,</span><br><span class="line">            &quot;FileRename&quot;: &quot;_ProtoPackage_&quot;</span><br><span class="line">        &#125;,</span><br><span class="line">        &quot;protoService&quot;: &#123;</span><br><span class="line">            &quot;type&quot;: &quot;parameter&quot;,</span><br><span class="line">            &quot;replaces&quot;: &quot;_ProtoService_&quot;,</span><br><span class="line">            &quot;datatype&quot;: &quot;text&quot;,</span><br><span class="line">            &quot;isRequired&quot;: true,</span><br><span class="line">            &quot;description&quot;: &quot;Provide the proto service name&quot;,</span><br><span class="line">            &quot;FileRename&quot;: &quot;_ProtoService_&quot;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">syntax &#x3D; &quot;proto3&quot;;</span><br><span class="line"></span><br><span class="line">option csharp_namespace &#x3D; &quot;AAA&quot;;</span><br><span class="line"></span><br><span class="line">package _ProtoPackage_;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; The service definition.</span><br><span class="line">service _ProtoService_ &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如上所示，通过定义symbol变量可以将grpc proto文件的报名和服务名替换掉</p>
+<h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><p>只用上述的三个配置参数，个人可以满足90%的场景需求，模板定制，无非就是变量替换，对于一些其他的场景微软官方也提供了相应的<a href="https://github.com/dotnet/dotnet-template-samples" target="_blank" rel="noopener">例子</a></p>
+<h2 id="模板发布、安装、卸载"><a href="#模板发布、安装、卸载" class="headerlink" title="模板发布、安装、卸载"></a>模板发布、安装、卸载</h2><p>一般说来，模板开发完后我们会讲模板存放到内部的nuget服务器，为此，新建另外一个新的项目，来对模板文件打包，注意这里我们新建一个新的项目仅仅是为了将我们的模板内容传到nuget服务器，这个新建项目不是模板。<br>eg，项目结构如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">project_folder</span><br><span class="line">│   MyDotnetTemplates.csproj</span><br><span class="line">│</span><br><span class="line">└───templates</span><br><span class="line">    ├───mytemplate1</span><br><span class="line">    │   │   console.cs</span><br><span class="line">    │   │   readme.txt</span><br><span class="line">    │   │</span><br><span class="line">    │   └───.template.config</span><br><span class="line">    │           template.json</span><br><span class="line">    │</span><br><span class="line">    └───mytemplate2</span><br><span class="line">        │   otherfile.cs</span><br><span class="line">        │</span><br><span class="line">        └───.template.config</span><br><span class="line">                template.json</span><br></pre></td></tr></table></figure>
+
+<p>MyDotnetTemplates.csproj内容如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">&lt;Project Sdk&#x3D;&quot;Microsoft.NET.Sdk&quot;&gt;</span><br><span class="line"></span><br><span class="line">  &lt;PropertyGroup&gt;</span><br><span class="line">    &lt;PackageType&gt;Template&lt;&#x2F;PackageType&gt;</span><br><span class="line">    &lt;PackageVersion&gt;1.0&lt;&#x2F;PackageVersion&gt;</span><br><span class="line">    &lt;PackageId&gt;AdatumCorporation.Utility.Templates&lt;&#x2F;PackageId&gt;</span><br><span class="line">    &lt;Title&gt;AdatumCorporation Templates&lt;&#x2F;Title&gt;</span><br><span class="line">    &lt;Authors&gt;Me&lt;&#x2F;Authors&gt;</span><br><span class="line">    &lt;Description&gt;Templates to use when creating an application for Adatum Corporation.&lt;&#x2F;Description&gt;</span><br><span class="line">    &lt;PackageTags&gt;dotnet-new;templates;contoso&lt;&#x2F;PackageTags&gt;</span><br><span class="line">    &lt;TargetFramework&gt;netstandard2.0&lt;&#x2F;TargetFramework&gt;</span><br><span class="line"></span><br><span class="line">    &lt;IncludeContentInPack&gt;true&lt;&#x2F;IncludeContentInPack&gt;</span><br><span class="line">    &lt;IncludeBuildOutput&gt;false&lt;&#x2F;IncludeBuildOutput&gt;</span><br><span class="line">    &lt;ContentTargetFolders&gt;content&lt;&#x2F;ContentTargetFolders&gt;</span><br><span class="line">  &lt;&#x2F;PropertyGroup&gt;</span><br><span class="line"></span><br><span class="line">  &lt;ItemGroup&gt;</span><br><span class="line">    &lt;Content Include&#x3D;&quot;templates\**\*&quot; Exclude&#x3D;&quot;templates\**\bin\**;templates\**\obj\**&quot; &#x2F;&gt;</span><br><span class="line">    &lt;Compile Remove&#x3D;&quot;**\*&quot; &#x2F;&gt;</span><br><span class="line">  &lt;&#x2F;ItemGroup&gt;</span><br><span class="line"></span><br><span class="line">&lt;&#x2F;Project&gt;</span><br></pre></td></tr></table></figure>
+<p>templates存发的是模板内容，用户如果执行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dotnet new -i AdatumCorporation.Utility.Template</span><br></pre></td></tr></table></figure>
+<p>那么就会获得模板，<br>同理,通过以下命令可以删除模板内容</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dotnet new -u AdatumCorporation.Utility.Template</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="https://devblogs.microsoft.com/dotnet/how-to-create-your-own-templates-for-dotnet-new/" target="_blank" rel="noopener">how to create your own templates for dotnet new</a></p>
+<p><a href="https://github.com/dotnet/docs/edit/master/docs/core/tools/custom-templates.md" target="_blank" rel="noopener">custom-templates</a></p>
+
+        
+        <br />
+        <div id="comment-container">
+        </div>
+        <div id="disqus_thread"></div>
+
+        <div id="lv-container">
+        </div>
+
+    </div>
+</div>
+
+    </div>
+</div>
+
+
+<footer class="footer">
+    <ul class="list-inline text-center">
+        
+        <li>
+            <a target="_blank" href="https://twitter.com/RebornXu">
+                            <span class="fa-stack fa-lg">
+                                <i class="iconfont icon-twitter"></i>
+                            </span>
+            </a>
+        </li>
+        
+        
+
+        
+        <li>
+            <a target="_blank" href="http://weibo.com/2016115931">
+                            <span class="fa-stack fa-lg">
+                                  <i class="iconfont icon-weibo"></i>
+                            </span>
+            </a>
+        </li>
+        
+
+        
+
+        
+        <li>
+            <a target="_blank"  href="https://github.com/loremipsumsharp">
+                            <span class="fa-stack fa-lg">
+                                <i class="iconfont icon-github"></i>
+                            </span>
+            </a>
+        </li>
+        
+
+        
+
+    </ul>
+    
+    <p>
+        <span id="busuanzi_container_site_pv">
+            <span id="busuanzi_value_site_pv"></span>PV
+        </span>
+        <span id="busuanzi_container_site_uv">
+            <span id="busuanzi_value_site_uv"></span>UV
+        </span>
+        Created By <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>  Theme <a href="https://github.com/aircloud/hexo-theme-aircloud" target="_blank" rel="noopener">AirCloud</a></p>
+</footer>
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-158639013-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-158639013-1');
+</script>
+
+
+</body>
+
+<script>
+    // We expose some of the variables needed by the front end
+    window.hexo_search_path = "search.json"
+    window.hexo_root = "/"
+    window.isPost = true
+</script>
+<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+
+<script src="/js/index.js"></script>
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+    <script type="text/javascript">
+       (function() {
+           if (typeof LivereTower === 'function') { return; }
+
+           var j, d = document.getElementById('lv-container');
+
+           d.setAttribute('data-id','city');
+           d.setAttribute('data-uid' , 'MTAyMC80ODY1NC8yNTE0OA');
+
+           j = document.createElement('script');
+           j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+           j.async = true;
+
+           d.appendChild(j);
+       })();
+    </script>
+    <noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+    </div>
+
+</html>
