@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://loremipsumsharp.github.io/"/>
-  <updated>2021-04-02T17:53:53.331Z</updated>
+  <updated>2021-04-02T17:54:42.488Z</updated>
   <id>https://loremipsumsharp.github.io/</id>
   
   <author>
@@ -18,10 +18,10 @@
   
   <entry>
     <title>Async/Await是如何导致死锁的</title>
-    <link href="https://loremipsumsharp.github.io/2021/04/25/Async/Await&amp;Await%E6%98%AF%E5%A6%82%E4%BD%95%E5%AF%BC%E8%87%B4%E6%AD%BB%E9%94%81%E7%9A%84/"/>
-    <id>https://loremipsumsharp.github.io/2021/04/25/Async/Await&amp;Await%E6%98%AF%E5%A6%82%E4%BD%95%E5%AF%BC%E8%87%B4%E6%AD%BB%E9%94%81%E7%9A%84/</id>
+    <link href="https://loremipsumsharp.github.io/2021/04/25/Await&amp;Await%E6%98%AF%E5%A6%82%E4%BD%95%E5%AF%BC%E8%87%B4%E6%AD%BB%E9%94%81%E7%9A%84/"/>
+    <id>https://loremipsumsharp.github.io/2021/04/25/Await&amp;Await%E6%98%AF%E5%A6%82%E4%BD%95%E5%AF%BC%E8%87%B4%E6%AD%BB%E9%94%81%E7%9A%84/</id>
     <published>2021-04-25T05:40:09.000Z</published>
-    <updated>2021-04-02T17:53:53.331Z</updated>
+    <updated>2021-04-02T17:54:42.488Z</updated>
     
     <content type="html"><![CDATA[<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>在使用Async/Await的过程中，经常出现原因不明的死锁，感觉代码写的没啥问题，但是程序就是卡住了，为了明白这个问题，必须知道async/await的相关原理</p><h2 id="当程序遇到await关键字后会怎么处理"><a href="#当程序遇到await关键字后会怎么处理" class="headerlink" title="当程序遇到await关键字后会怎么处理"></a>当程序遇到await关键字后会怎么处理</h2><p>当程序遇到await的关键字后，会做以下事件：</p><ol><li>将await关键字后面的相关操作注册为一个回调</li><li>释放当前线程T</li><li>如果SynchronizationContext.Current不为null，那么在步骤1的回调将通过SynchronizationContext.Post去执行（最终是步骤2的线程T去执行这段代码）</li><li>如果SynchronizationContext.Current为null，那么在步骤1的回调将会通过线程池里面的线程去执行</li></ol><h3 id="为什么会产生死锁"><a href="#为什么会产生死锁" class="headerlink" title="为什么会产生死锁"></a>为什么会产生死锁</h3><p>如下图所示：<br><a href="https://imgtu.com/i/cZt6sJ" target="_blank" rel="noopener"><img src="https://z3.ax1x.com/2021/04/02/cZt6sJ.png" alt="cZt6sJ.png"></a></p><ol><li>在UI线程我们调用了Wait()或者.Result，这个时候UI线程会等待异步结果</li><li>I/O线程异步操作结束后，根据以上描述，I/O线程需要SynchronizationContext.Post来继续执行await后面的逻辑，谁来执行？必然是UI线程，但是UI线程仍然在等待异步的结果，这个时候I/O线程和UI线程会出现相互等待导致死锁产生</li></ol><h3 id="如何避免死锁"><a href="#如何避免死锁" class="headerlink" title="如何避免死锁"></a>如何避免死锁</h3><p>如下图所示：</p><p><a href="https://imgtu.com/i/cmL6oD" target="_blank" rel="noopener"><img src="https://z3.ax1x.com/2021/04/03/cmL6oD.md.png" alt="cmL6oD.md.png"></a></p><p>使用<code>ConfigureAwait</code>,使用ConfigureAwait，回调会通过线程池中的线程去执行，而不是SynchronizationContext关联线程(UI线程)，所以解决了这个主要矛盾，就没有死锁了</p><h3 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h3><p>由于async/await的底层使用了SynchronizationContext，SynchronizationContext有多种实现（console，gui，web）。在.NET FRAMEWORK环境下进行了实验，不仅在winform，在MVC中，在异步方法中进行同步调用，也会产生死锁。<br>但是在.NET CORE中，由于取消了SynchronizationContext，在异步方法中直接进行同步调用是没有问题的，可以放心调用，但是还是不建议这样做</p><h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><p><a href="https://tooslowexception.com/the-danger-of-asyncawait-and-result-in-one-picture/" target="_blank" rel="noopener">The danger of async/await and .Result in one picture</a></p>]]></content>
     
