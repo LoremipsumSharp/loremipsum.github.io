@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://loremipsumsharp.github.io/"/>
-  <updated>2021-02-28T17:21:58.954Z</updated>
+  <updated>2021-04-02T17:53:53.331Z</updated>
   <id>https://loremipsumsharp.github.io/</id>
   
   <author>
@@ -15,6 +15,28 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Async/Await是如何导致死锁的</title>
+    <link href="https://loremipsumsharp.github.io/2021/04/25/Async/Await&amp;Await%E6%98%AF%E5%A6%82%E4%BD%95%E5%AF%BC%E8%87%B4%E6%AD%BB%E9%94%81%E7%9A%84/"/>
+    <id>https://loremipsumsharp.github.io/2021/04/25/Async/Await&amp;Await%E6%98%AF%E5%A6%82%E4%BD%95%E5%AF%BC%E8%87%B4%E6%AD%BB%E9%94%81%E7%9A%84/</id>
+    <published>2021-04-25T05:40:09.000Z</published>
+    <updated>2021-04-02T17:53:53.331Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>在使用Async/Await的过程中，经常出现原因不明的死锁，感觉代码写的没啥问题，但是程序就是卡住了，为了明白这个问题，必须知道async/await的相关原理</p><h2 id="当程序遇到await关键字后会怎么处理"><a href="#当程序遇到await关键字后会怎么处理" class="headerlink" title="当程序遇到await关键字后会怎么处理"></a>当程序遇到await关键字后会怎么处理</h2><p>当程序遇到await的关键字后，会做以下事件：</p><ol><li>将await关键字后面的相关操作注册为一个回调</li><li>释放当前线程T</li><li>如果SynchronizationContext.Current不为null，那么在步骤1的回调将通过SynchronizationContext.Post去执行（最终是步骤2的线程T去执行这段代码）</li><li>如果SynchronizationContext.Current为null，那么在步骤1的回调将会通过线程池里面的线程去执行</li></ol><h3 id="为什么会产生死锁"><a href="#为什么会产生死锁" class="headerlink" title="为什么会产生死锁"></a>为什么会产生死锁</h3><p>如下图所示：<br><a href="https://imgtu.com/i/cZt6sJ" target="_blank" rel="noopener"><img src="https://z3.ax1x.com/2021/04/02/cZt6sJ.png" alt="cZt6sJ.png"></a></p><ol><li>在UI线程我们调用了Wait()或者.Result，这个时候UI线程会等待异步结果</li><li>I/O线程异步操作结束后，根据以上描述，I/O线程需要SynchronizationContext.Post来继续执行await后面的逻辑，谁来执行？必然是UI线程，但是UI线程仍然在等待异步的结果，这个时候I/O线程和UI线程会出现相互等待导致死锁产生</li></ol><h3 id="如何避免死锁"><a href="#如何避免死锁" class="headerlink" title="如何避免死锁"></a>如何避免死锁</h3><p>如下图所示：</p><p><a href="https://imgtu.com/i/cmL6oD" target="_blank" rel="noopener"><img src="https://z3.ax1x.com/2021/04/03/cmL6oD.md.png" alt="cmL6oD.md.png"></a></p><p>使用<code>ConfigureAwait</code>,使用ConfigureAwait，回调会通过线程池中的线程去执行，而不是SynchronizationContext关联线程(UI线程)，所以解决了这个主要矛盾，就没有死锁了</p><h3 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h3><p>由于async/await的底层使用了SynchronizationContext，SynchronizationContext有多种实现（console，gui，web）。在.NET FRAMEWORK环境下进行了实验，不仅在winform，在MVC中，在异步方法中进行同步调用，也会产生死锁。<br>但是在.NET CORE中，由于取消了SynchronizationContext，在异步方法中直接进行同步调用是没有问题的，可以放心调用，但是还是不建议这样做</p><h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><p><a href="https://tooslowexception.com/the-danger-of-asyncawait-and-result-in-one-picture/" target="_blank" rel="noopener">The danger of async/await and .Result in one picture</a></p>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h2 id=&quot;背景&quot;&gt;&lt;a href=&quot;#背景&quot; class=&quot;headerlink&quot; title=&quot;背景&quot;&gt;&lt;/a&gt;背景&lt;/h2&gt;&lt;p&gt;在使用Async/Await的过程中，经常出现原因不明的死锁，感觉代码写的没啥问题，但是程序就是卡住了，为了明白这个问题，必须知道async
+      
+    
+    </summary>
+    
+    
+    
+  </entry>
   
   <entry>
     <title>使用dotnet template engine创建项目模板</title>
@@ -87,9 +109,9 @@
     <link href="https://loremipsumsharp.github.io/2020/09/22/GrpcChannel%E6%B2%A1%E6%9C%89%E6%AD%A3%E5%B8%B8%E5%85%B3%E9%97%AD%E8%80%8C%E5%AF%BC%E8%87%B4%E7%9A%84%E5%86%85%E5%AD%98%E6%B3%84%E9%9C%B2%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"/>
     <id>https://loremipsumsharp.github.io/2020/09/22/GrpcChannel%E6%B2%A1%E6%9C%89%E6%AD%A3%E5%B8%B8%E5%85%B3%E9%97%AD%E8%80%8C%E5%AF%BC%E8%87%B4%E7%9A%84%E5%86%85%E5%AD%98%E6%B3%84%E9%9C%B2%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/</id>
     <published>2020-09-22T00:23:22.413Z</published>
-    <updated>2020-10-04T18:44:10.684Z</updated>
+    <updated>2021-04-02T16:50:49.081Z</updated>
     
-    <content type="html"><![CDATA[<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>日前上线了一个用于统计统计用户活跃度的服务，上线之后，出现了内存泄漏的问题，通过lldb对程序的core dump进行分析，最终找到了泄漏的原因</p><h2 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h2><p>服务上线后，出现大量告警，提示服务器内存不足，grafana监控提示服务内存泄漏：</p><p><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/WeChat%20Screenshot_20200922084321.png" alt=""></p><p>使用将线上的服务的内存dump下来，继续观察：</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;usr&#x2F;share&#x2F;dotnet&#x2F;shared&#x2F;Microsoft.NETCore.App&#x2F;2.1.1&#x2F;createdump -u 1</span><br></pre></td></tr></table></figure><p>通过lldb加载core dump文件：</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">lldb-3.9 dotnet -c &#x2F;tmp&#x2F;20290824_activevalue_coredump  -o &quot;plugin load &#x2F;usr&#x2F;share&#x2F;dotnet&#x2F;shared&#x2F;Microsoft.NETCore.App&#x2F;2.1.1&#x2F;libsosplugin.so&quot;</span><br></pre></td></tr></table></figure><p>查看堆大小：</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">eeheap -gc</span><br></pre></td></tr></table></figure><p><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/WeChat%20Screenshot_20200927023535.png" alt=""></p><p>进一步查看当前堆各个类型的对象数量<br><code>dumpheap -stat</code></p><p>提示有大量Grpc对象积压.</p><p>进一步，对项目的各个接口进行压测,对内存进行三次采样：</p><p>第一次采样77MB:</p><p><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/dasdasdas.png" alt=""></p><p>第二次采样82MB:</p><p><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/2323fadas.png" alt=""></p><p>第三次采样 86MB：</p><p><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/adasdasgdfasdas.png" alt=""></p><p>VS内存分析工具提示GRPC内存对象一直没有得到有效的控制，数量不断上升<br>在采样过程中手动进行GC，只是下降53个对象，大量channel仍然驻留内存:</p><p><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/dasdasfdvfsdvsdf.png" alt=""></p><p><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/dasdascas.png" alt=""></p><p>根据上述采样分析，可以肯定业务代码中存在grpc channel正常关闭的场景。</p><p>进一步查看代码发现：<br><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/WeChat%20Screenshot_20200927024147.png" alt=""></p><p>每一次通过grpc client调用其他服务的时候会直接常见Channel，而不是复用之前的Channel，并且创建后的Channel没有关闭</p><p>修复这部分代码后，线上内存使用率恢复正常</p><h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="https://github.com/grpc/grpc-java/issues/3268" target="_blank" rel="noopener">Channel creation best practice</a></p><p><a href="https://docs.microsoft.com/zh-cn/aspnet/core/grpc/performance?view=aspnetcore-5.0" target="_blank" rel="noopener">Performance best practices with gRPC</a></p>]]></content>
+    <content type="html"><![CDATA[<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>日前上线了一个用于统计统计用户活跃度的服务，上线之后，出现了内存泄漏的问题，通过lldb对程序的core dump进行分析，最终找到了泄漏的原因</p><h2 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h2><p>服务上线后，出现大量告警，提示服务器内存不足，grafana监控提示服务内存泄漏：</p><p><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/WeChat%20Screenshot_20200922084321.png" alt=""></p><p>使用将线上的服务的内存dump下来，继续观察：</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;usr&#x2F;share&#x2F;dotnet&#x2F;shared&#x2F;Microsoft.NETCore.App&#x2F;2.1.1&#x2F;createdump -u 1</span><br></pre></td></tr></table></figure><p>通过lldb加载core dump文件：</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">lldb-3.9 dotnet -c &#x2F;tmp&#x2F;20290824_activevalue_coredump  -o &quot;plugin load &#x2F;usr&#x2F;share&#x2F;dotnet&#x2F;shared&#x2F;Microsoft.NETCore.App&#x2F;2.1.1&#x2F;libsosplugin.so&quot;</span><br></pre></td></tr></table></figure><p>查看堆大小：</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">eeheap -gc</span><br></pre></td></tr></table></figure><p><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/WeChat%20Screenshot_20200927023535.png" alt=""></p><p>进一步查看当前堆各个类型的对象数量<br><code>dumpheap -stat</code></p><p>提示有大量Grpc对象积压.</p><p>进一步，对项目的各个接口进行压测,对内存进行三次采样：</p><p>第一次采样77MB:</p><p><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/dasdasdas.png" alt=""></p><p>第二次采样82MB:</p><p><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/2323fadas.png" alt=""></p><p>第三次采样 86MB：</p><p><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/adasdasgdfasdas.png" alt=""></p><p>VS内存分析工具提示GRPC内存对象一直没有得到有效的控制，数量不断上升<br>在采样过程中手动进行GC，只是下降53个对象，大量channel仍然驻留内存:</p><p><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/dasdasfdvfsdvsdf.png" alt=""></p><p><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/dasdascas.png" alt=""></p><p>根据上述采样分析，可以肯定业务代码中存在grpc channel正常关闭的场景。</p><p>进一步查看代码发现：<br><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/WeChat%20Screenshot_20200927024147.png" alt=""></p><p>每一次通过grpc client调用其他服务的时候会直接常见Channel，而不是复用之前的Channel，并且创建后的Channel没有关闭</p><p>修复这部分代码后，线上内存使用率恢复正常</p><h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="https://github.com/grpc/grpc-java/issues/3268" target="_blank" rel="noopener">Channel creation best practice</a></p><p><a href="https://docs.microsoft.com/zh-cn/aspnet/core/grpc/performance?view=aspnetcore-5.0" target="_blank" rel="noopener">Performance best practices with gRPC</a>！！！</p>]]></content>
     
     <summary type="html">
     
@@ -432,28 +454,6 @@
       
       
         &lt;h2 id=&quot;问题的背景&quot;&gt;&lt;a href=&quot;#问题的背景&quot; class=&quot;headerlink&quot; title=&quot;问题的背景&quot;&gt;&lt;/a&gt;问题的背景&lt;/h2&gt;&lt;p&gt;前段时间开发环境搭建了一套kafka环境，搭建完成后通过客户端去连接kafka时，当produer调用send的时候
-      
-    
-    </summary>
-    
-    
-    
-  </entry>
-  
-  <entry>
-    <title>NetCore应用配置Auto Core Dump</title>
-    <link href="https://loremipsumsharp.github.io/2020/01/09/NetCore%E5%BA%94%E7%94%A8%E9%85%8D%E7%BD%AEAuto%20Core%20Dump/"/>
-    <id>https://loremipsumsharp.github.io/2020/01/09/NetCore%E5%BA%94%E7%94%A8%E9%85%8D%E7%BD%AEAuto%20Core%20Dump/</id>
-    <published>2020-01-09T12:40:12.000Z</published>
-    <updated>2020-04-28T02:55:59.580Z</updated>
-    
-    <content type="html"><![CDATA[<h2 id="问题背景"><a href="#问题背景" class="headerlink" title="问题背景"></a>问题背景</h2><p>前阵子线上用户标签服务频繁出现内存泄漏问题，早上服务运行的好好的，经常一到半夜服务就挂掉。由于事发半夜，很难加以人工干预，而早上dump出来的文件参考价值很低，迫切需要一种自动化的手段让服务在宕掉的时候能够保存完整的案发现场。事实上，.NET CORE可以支持这一需求，不过默认是不开启的，需要加以配置。</p><h2 id="Auto-Core-Dump配置方法"><a href="#Auto-Core-Dump配置方法" class="headerlink" title="Auto Core Dump配置方法"></a>Auto Core Dump配置方法</h2><p>以下内容是我原封不动从dotnet/rumtime这个仓库拷贝过来的：</p><p>Environment variables supported:</p><ul><li><code>COMPlus_DbgEnableMiniDump</code>: if set to “1”, enables this core dump generation. The default is NOT to generate a dump.</li><li><code>COMPlus_DbgMiniDumpType</code>: See below. Default is “2” MiniDumpWithPrivateReadWriteMemory.</li><li><code>COMPlus_DbgMiniDumpName</code>: if set, use as the template to create the dump path and file name. The pid can be placed in the name with %d. The default is <em>/tmp/coredump.%d</em>.</li><li><code>COMPlus_CreateDumpDiagnostics</code>: if set to “1”, enables the <em>createdump</em> utilities diagnostic messages (TRACE macro).</li></ul><p>COMPlus_DbgMiniDumpType values:</p><table><thead><tr><th>Value</th><th align="center">Minidump Enum</th><th>Description</th></tr></thead><tbody><tr><td>1</td><td align="center">MiniDumpNormal</td><td>Include just the information necessary to capture stack traces for all existing threads in a process. Limited GC heap memory and information.</td></tr><tr><td>2</td><td align="center">MiniDumpWithPrivateReadWriteMemory (default)</td><td>Includes the GC heaps and information necessary to capture stack traces for all existing threads in a process.</td></tr><tr><td>3</td><td align="center">MiniDumpFilterTriage</td><td>Include just the information necessary to capture stack traces for all existing threads in a process. Limited GC heap memory and information.</td></tr><tr><td>4</td><td align="center">MiniDumpWithFullMemory</td><td>Include all accessible memory in the process. The raw memory data is included at the end, so that the initial structures can be mapped directly without the raw memory information. This option can result in a very large file.</td></tr></tbody></table><p>根据以上内容，可以在Dockerfile或者docker-compose文件加入以下环境变量</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ENV COMPlus_DbgEnableMiniDump&#x3D;&quot;1&quot;  # enables core dump generation</span><br><span class="line">ENV COMPlus_DbgMiniDumpName&#x3D;&quot;&#x2F;diagnostics&#x2F;dumps&#x2F;coredump_%d&quot; # core dump文件位置，一般是一个挂在在宿主机的目录</span><br><span class="line">ENV COMPlus_DbgMiniDumpType&#x3D;&quot;4&quot; # 建议选择4，也就是full dump，保存的“现场”更加完整，但文件也会非常大</span><br></pre></td></tr></table></figure><h2 id="实验"><a href="#实验" class="headerlink" title="实验"></a>实验</h2><p>在一个可以被调用的接口加入以下代码：</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Environment.FailFast()</span><br></pre></td></tr></table></figure><p>这个方法可以让应用直接挂掉,挂掉后观察相应的挂载目录有无生成dump文件</p><h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="https://github.com/dotnet/runtime/blob/8497763bbfa70455e6f08ed7aa345d43db1d22d7/docs/design/coreclr/botr/xplat-minidump-generation.md" target="_blank" rel="noopener">xplat-minidump-generation</a></p>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;h2 id=&quot;问题背景&quot;&gt;&lt;a href=&quot;#问题背景&quot; class=&quot;headerlink&quot; title=&quot;问题背景&quot;&gt;&lt;/a&gt;问题背景&lt;/h2&gt;&lt;p&gt;前阵子线上用户标签服务频繁出现内存泄漏问题，早上服务运行的好好的，经常一到半夜服务就挂掉。由于事发半夜，很难加以人工干预，而
       
     
     </summary>

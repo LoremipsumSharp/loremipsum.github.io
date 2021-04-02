@@ -11,7 +11,7 @@
 
     <title>
         
-        Loremipsum Blog
+        Async/Await是如何导致死锁的 - Loremipsum Blog
         
     </title>
 
@@ -58,7 +58,7 @@
     </div>
     <div class="contents" id="nav-content">
         <ul>
-            <li  class=active >
+            <li >
                 <a href="/">
                     <i class="iconfont icon-shouye1"></i>
                     <span>主页</span>
@@ -93,6 +93,10 @@
         </ul>
     </div>
     
+        <div id="toc" class="toc-article">
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#背景"><span class="toc-text">背景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#当程序遇到await关键字后会怎么处理"><span class="toc-text">当程序遇到await关键字后会怎么处理</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#为什么会产生死锁"><span class="toc-text">为什么会产生死锁</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#如何避免死锁"><span class="toc-text">如何避免死锁</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#结论"><span class="toc-text">结论</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#参考"><span class="toc-text">参考</span></a></li></ol></li></ol>
+</div>
+    
 </div>
 
 
@@ -117,157 +121,52 @@
     <div class="index-middle">
         <!-- Main Content -->
         
-<div class="post-preview-container" style="min-height: 648px">
-    
-    <div class="post-preview">
-        <div class="post-time">2021-04-25</div>
-        <div class="post-info">
-            <a href="/2021/04/25/Async/Await&Await是如何导致死锁的/">
-                <h3>
-                    Async/Await是如何导致死锁的
-                </h3>
-            </a>
-            <p>
-                
-            </p>
-        </div>
+
+
+<div class="post-container">
+    <div class="post-title">
+        Async/Await是如何导致死锁的
     </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2021-03-01</div>
-        <div class="post-info">
-            <a href="/2021/03/01/使用dotnet template engine创建项目模板/">
-                <h3>
-                    使用dotnet template engine创建项目模板
-                </h3>
-            </a>
-            <p>
-                
-            </p>
-        </div>
+
+    <div class="post-meta">
+        <span class="attr">发布于：<span>2021-04-25 13:40:09</span></span>
+        
+        </span>
+        <span class="attr">访问：<span id="busuanzi_value_page_pv"></span>
+</span>
+</span>
     </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2020-12-23</div>
-        <div class="post-info">
-            <a href="/2020/12/23/如何Swashbuckle可以动态的增加EndPoint/">
-                <h3>
-                    如何Swashbuckle可以动态的增加EndPoint
-                </h3>
-            </a>
-            <p>
-                
-            </p>
+    <div class="post-content ">
+        <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>在使用Async/Await的过程中，经常出现原因不明的死锁，感觉代码写的没啥问题，但是程序就是卡住了，为了明白这个问题，必须知道async/await的相关原理</p>
+<h2 id="当程序遇到await关键字后会怎么处理"><a href="#当程序遇到await关键字后会怎么处理" class="headerlink" title="当程序遇到await关键字后会怎么处理"></a>当程序遇到await关键字后会怎么处理</h2><p>当程序遇到await的关键字后，会做以下事件：</p>
+<ol>
+<li>将await关键字后面的相关操作注册为一个回调</li>
+<li>释放当前线程T</li>
+<li>如果SynchronizationContext.Current不为null，那么在步骤1的回调将通过SynchronizationContext.Post去执行（最终是步骤2的线程T去执行这段代码）</li>
+<li>如果SynchronizationContext.Current为null，那么在步骤1的回调将会通过线程池里面的线程去执行</li>
+</ol>
+<h3 id="为什么会产生死锁"><a href="#为什么会产生死锁" class="headerlink" title="为什么会产生死锁"></a>为什么会产生死锁</h3><p>如下图所示：<br><a href="https://imgtu.com/i/cZt6sJ" target="_blank" rel="noopener"><img src="https://z3.ax1x.com/2021/04/02/cZt6sJ.png" alt="cZt6sJ.png"></a></p>
+<ol>
+<li>在UI线程我们调用了Wait()或者.Result，这个时候UI线程会等待异步结果</li>
+<li>I/O线程异步操作结束后，根据以上描述，I/O线程需要SynchronizationContext.Post来继续执行await后面的逻辑，谁来执行？必然是UI线程，但是UI线程仍然在等待异步的结果，这个时候I/O线程和UI线程会出现相互等待导致死锁产生</li>
+</ol>
+<h3 id="如何避免死锁"><a href="#如何避免死锁" class="headerlink" title="如何避免死锁"></a>如何避免死锁</h3><p>如下图所示：</p>
+<p><a href="https://imgtu.com/i/cmL6oD" target="_blank" rel="noopener"><img src="https://z3.ax1x.com/2021/04/03/cmL6oD.md.png" alt="cmL6oD.md.png"></a></p>
+<p>使用<code>ConfigureAwait</code>,使用ConfigureAwait，回调会通过线程池中的线程去执行，而不是SynchronizationContext关联线程(UI线程)，所以解决了这个主要矛盾，就没有死锁了</p>
+<h3 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h3><p>由于async/await的底层使用了SynchronizationContext，SynchronizationContext有多种实现（console，gui，web）。在.NET FRAMEWORK环境下进行了实验，不仅在winform，在MVC中，在异步方法中进行同步调用，也会产生死锁。<br>但是在.NET CORE中，由于取消了SynchronizationContext，在异步方法中直接进行同步调用是没有问题的，可以放心调用，但是还是不建议这样做</p>
+<h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><p><a href="https://tooslowexception.com/the-danger-of-asyncawait-and-result-in-one-picture/" target="_blank" rel="noopener">The danger of async/await and .Result in one picture</a></p>
+
+        
+        <br />
+        <div id="comment-container">
         </div>
-    </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2020-10-26</div>
-        <div class="post-info">
-            <a href="/2020/10/26/rxjs中tap,map,switchmap的区别/">
-                <h3>
-                    rxjs中tap,map,switchmap的区别
-                </h3>
-            </a>
-            <p>
-                
-            </p>
+        <div id="disqus_thread"></div>
+
+        <div id="lv-container">
         </div>
+
     </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2020-09-22</div>
-        <div class="post-info">
-            <a href="/2020/09/22/GrpcChannel没有正常关闭而导致的内存泄露问题排查/">
-                <h3>
-                    Grpc Channel没有关闭而导致的内存泄露问题排查
-                </h3>
-            </a>
-            <p>
-                
-            </p>
-        </div>
-    </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2020-09-21</div>
-        <div class="post-info">
-            <a href="/2020/09/21/Union查询性能优/">
-                <h3>
-                    Union查询性能优
-                </h3>
-            </a>
-            <p>
-                
-            </p>
-        </div>
-    </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2020-09-14</div>
-        <div class="post-info">
-            <a href="/2020/09/14/ThreadLocal在RabbitMq中的应用/">
-                <h3>
-                    ThreadLocal的应用
-                </h3>
-            </a>
-            <p>
-                
-            </p>
-        </div>
-    </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2020-08-10</div>
-        <div class="post-info">
-            <a href="/2020/08/10/基于 kubernetes 的动态 jenkins slave的自动化发布/">
-                <h3>
-                    基于 kubernetes 的动态 jenkins slave的自动化发布
-                </h3>
-            </a>
-            <p>
-                
-            </p>
-        </div>
-    </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2020-08-05</div>
-        <div class="post-info">
-            <a href="/2020/08/05/DNS的一些入门的基本概念/">
-                <h3>
-                    DNS的一些入门的基本概念
-                </h3>
-            </a>
-            <p>
-                
-            </p>
-        </div>
-    </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2020-07-16</div>
-        <div class="post-info">
-            <a href="/2020/07/16/内存管理中需要掌握的一些基本概念/">
-                <h3>
-                    .NET内存管理中需要掌握的一些基本概念(持续更新）
-                </h3>
-            </a>
-            <p>
-                
-            </p>
-        </div>
-    </div>
-    
 </div>
-<ul class="pager">
-    
-    
-    <li class="next">
-        <a href="/page/2/">Older Posts &rarr;</a>
-    </li>
-    
-</ul>
 
     </div>
 </div>
@@ -339,7 +238,7 @@
     // We expose some of the variables needed by the front end
     window.hexo_search_path = "search.json"
     window.hexo_root = "/"
-    window.isPost = false
+    window.isPost = true
 </script>
 <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
 
@@ -349,5 +248,24 @@
 
 
 
+
+    <script type="text/javascript">
+       (function() {
+           if (typeof LivereTower === 'function') { return; }
+
+           var j, d = document.getElementById('lv-container');
+
+           d.setAttribute('data-id','city');
+           d.setAttribute('data-uid' , 'MTAyMC80ODY1NC8yNTE0OA');
+
+           j = document.createElement('script');
+           j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+           j.async = true;
+
+           d.appendChild(j);
+       })();
+    </script>
+    <noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+    </div>
 
 </html>
