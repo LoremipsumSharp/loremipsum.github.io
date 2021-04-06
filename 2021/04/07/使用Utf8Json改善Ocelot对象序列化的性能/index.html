@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="keyword"  content="">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>
+        
+        使用Utf8Json改善Ocelot对象序列化的性能 - Loremipsum Blog
+        
+    </title>
+
+    <!-- Custom CSS -->
+    
+<link rel="stylesheet" href="/css/aircloud.css">
+
+    
+<link rel="stylesheet" href="/css/gitment.css">
+
+    <!--<link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">-->
+    <link href="//at.alicdn.com/t/font_620856_pl6z7sid89qkt9.css" rel="stylesheet" type="text/css">
+    <!-- ga & ba script hoook -->
+    <script></script>
+<meta name="generator" content="Hexo 4.2.0"><link rel="alternate" href="/atom.xml" title="Loremipsum Blog" type="application/atom+xml">
+</head>
+
+<body>
+
+<div class="site-nav-toggle" id="site-nav-toggle">
+    <button>
+        <span class="btn-bar"></span>
+        <span class="btn-bar"></span>
+        <span class="btn-bar"></span>
+    </button>
+</div>
+
+<div class="index-about">
+    <i> Things always get worse before they get better. </i>
+</div>
+
+<div class="index-container">
+    
+    <div class="index-left">
+        
+<div class="nav" id="nav">
+    <div class="avatar-name">
+        <div class="avatar ">
+            <img src="/img/avatar.jpg" />
+        </div>
+        <div class="name">
+            <i>Loremipsum</i>
+        </div>
+    </div>
+    <div class="contents" id="nav-content">
+        <ul>
+            <li >
+                <a href="/">
+                    <i class="iconfont icon-shouye1"></i>
+                    <span>主页</span>
+                </a>
+            </li>
+            <li >
+                <a href="/tags">
+                    <i class="iconfont icon-biaoqian1"></i>
+                    <span>标签</span>
+                </a>
+            </li>
+            <li >
+                <a href="/archives">
+                    <i class="iconfont icon-guidang2"></i>
+                    <span>存档</span>
+                </a>
+            </li>
+            <li >
+                <a href="/about/">
+                    <i class="iconfont icon-guanyu2"></i>
+                    <span>关于</span>
+                </a>
+            </li>
+            
+            <li>
+                <a id="search">
+                    <i class="iconfont icon-sousuo1"></i>
+                    <span>搜索</span>
+                </a>
+            </li>
+            
+        </ul>
+    </div>
+    
+        <div id="toc" class="toc-article">
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#背景"><span class="toc-text">背景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Utf8Json"><span class="toc-text">Utf8Json</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#重构"><span class="toc-text">重构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-text">参考</span></a></li></ol>
+</div>
+    
+</div>
+
+
+<div class="search-field" id="search-field">
+    <div class="search-container">
+        <div class="search-input">
+            <span id="esc-search"> <i class="icon-fanhui iconfont"></i></span>
+            <input id="search-input"/>
+            <span id="begin-search">搜索</span>
+        </div>
+        <div class="search-result-container" id="search-result-container">
+
+        </div>
+    </div>
+</div>
+
+        <div class="index-about-mobile">
+            <i> Things always get worse before they get better. </i>
+        </div>
+    </div>
+    
+    <div class="index-middle">
+        <!-- Main Content -->
+        
+
+
+<div class="post-container">
+    <div class="post-title">
+        使用Utf8Json改善Ocelot对象序列化的性能
+    </div>
+
+    <div class="post-meta">
+        <span class="attr">发布于：<span>2021-04-07 01:00:00</span></span>
+        
+        </span>
+        <span class="attr">访问：<span id="busuanzi_value_page_pv"></span>
+</span>
+</span>
+    </div>
+    <div class="post-content ">
+        <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>近期在对部门的crm系统进行服务化改造，服务化改造过程中，选择了ocelot作为api网关。各个服务的response到达ocelot之后，ocelot会对response做进一步封装，形成统一的规范格式后再返回给client，eg：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">public class Response</span><br><span class="line">&#123;</span><br><span class="line">    public Response(object data)</span><br><span class="line">    &#123;</span><br><span class="line">        Code &#x3D; 0;</span><br><span class="line">        Data &#x3D; data;</span><br><span class="line">        Message &#x3D; &quot;Success&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">    public Response(string message, int code &#x3D; 500)</span><br><span class="line">    &#123;</span><br><span class="line">        Code &#x3D; code;</span><br><span class="line">        Message &#x3D; message;</span><br><span class="line">    &#125;</span><br><span class="line">    public int Code &#123; get; set; &#125;</span><br><span class="line"></span><br><span class="line">    public string Message &#123; get; set; &#125;</span><br><span class="line"></span><br><span class="line">    public object Data &#123; get; set; &#125; &#x2F;&#x2F; 服务端返回的数据</span><br><span class="line"></span><br><span class="line">    public bool Success &#123; get &#123; return Code &#x3D;&#x3D; 0; &#125; &#125;</span><br><span class="line"></span><br><span class="line">    public string Error &#123;get;set;&#125;</span><br></pre></td></tr></table></figure>
+
+<p>通过ocelot对response格式进行统一处理，这样依赖就不需要每个服务再去单独写一个ResultFilter来处理，减少了大量重复代码。</p>
+<p>为了实现这个功能，那么就必须在ocelot中对各个服务的response进行序列化/反序列化处理。这样势必对ocelot的性能造成一定的影响。<br>那么有没有办法优化序列化/反序列化的性能呢？</p>
+<h2 id="Utf8Json"><a href="#Utf8Json" class="headerlink" title="Utf8Json"></a>Utf8Json</h2><p><a href="https://github.com/neuecc/Utf8Json" target="_blank" rel="noopener">Utf8Json</a> 是一个日本人写的一个Json序列化器，目前宣称是拥有最好的序列化性能。相关<a href="https://michaelscodingspot.com/the-battle-of-c-to-json-serializers-in-net-core-3/" target="_blank" rel="noopener">结论</a>也支持这一观点:</p>
+<p><strong>For serialization, Utf8Json is 2 times faster than System.Text.Json and a whole 4 times faster than Newtonsoft. For deserialization, Utf8Json is 3.5 times faster than System.Text.Json and 6 times faster than Newtonsoft.</strong></p>
+<p>查阅官方文档，utf8json之所以这么快主要原因有如下几个：</p>
+<ol>
+<li>不需要额外的内存分配<br>以Json.NET为例，如果我们希望将一个对象变成一个字节数组,待会会有以下两种方法：</li>
+</ol>
+<p>方法一：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">public static byte[] SerializeJson(DrawDescriptionLayer layer)</span><br><span class="line">&#123;</span><br><span class="line">    var s &#x3D; JsonConvert.SerializeObject(layer, js);</span><br><span class="line">    return Encoding.UTF8.GetBytes(s); &#x2F;&#x2F;rent from array pool here</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>方法二：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">public static byte[] SerializeJson2(DrawDescriptionLayer layer)</span><br><span class="line">&#123;</span><br><span class="line">    using (var ms &#x3D; new MemoryStream())</span><br><span class="line">    using (StreamWriter writer &#x3D; new StreamWriter(ms, Encoding.UTF8))</span><br><span class="line">    using (JsonTextWriter jsonWriter &#x3D; new JsonTextWriter(writer))</span><br><span class="line">    &#123;</span><br><span class="line">        JsonSerializer ser &#x3D; JsonSerializer.Create(js);</span><br><span class="line">        ser.Serialize(jsonWriter, layer);</span><br><span class="line">        jsonWriter.Flush();</span><br><span class="line">        return ms.ToArray(); &#x2F;&#x2F;rent from array pool here</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>以上两种方法都无一例外的产生了额外的内存分配，效率不高。以方法二为例，创建一个新的streamwriter就会导致一个bytes[3075]的allocation，很有可能我们并不需要这么多，同理UTF8.GetBytes也有这个问题。</p>
+<p>而Utf8json则做到了按需分配，比如，当我们执行如下代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">var bytes &#x3D; Utf8Json.JsonSerializer.Serialize(obj1, jsonresolver);</span><br></pre></td></tr></table></figure>
+
+<p>utf8json首先会从内存池取出一个buffer（每个线程一个副本）来生成bytes数组的具体内容</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">public static byte[] Serialize&lt;T&gt;(T value, IJsonFormatterResolver resolver)</span><br><span class="line">        &#123;</span><br><span class="line">            if (resolver &#x3D;&#x3D; null) resolver &#x3D; DefaultResolver;</span><br><span class="line"></span><br><span class="line">            var writer &#x3D; new JsonWriter(MemoryPool.GetBuffer());</span><br><span class="line">            var formatter &#x3D; resolver.GetFormatterWithVerify&lt;T&gt;();</span><br><span class="line">            formatter.Serialize(ref writer, value, resolver);</span><br><span class="line">            return writer.ToUtf8ByteArray();</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+<p>然后将bytes数据拷贝的dst后返回给调用端</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">byte[] FastCloneWithResize(byte[] src, int newSize)</span><br><span class="line">        &#123;</span><br><span class="line">            if (newSize &lt; 0) throw new ArgumentOutOfRangeException(&quot;newSize&quot;);</span><br><span class="line">            if (src.Length &lt; newSize) throw new ArgumentException(&quot;length &lt; newSize&quot;);</span><br><span class="line"></span><br><span class="line">            if (src &#x3D;&#x3D; null) return new byte[newSize];</span><br><span class="line"></span><br><span class="line">            byte[] dst &#x3D; new byte[newSize];</span><br><span class="line"></span><br><span class="line">#if NETSTANDARD &amp;&amp; !NET45</span><br><span class="line">            fixed (byte* pSrc &#x3D; &amp;src[0])</span><br><span class="line">            fixed (byte* pDst &#x3D; &amp;dst[0])</span><br><span class="line">            &#123;</span><br><span class="line">                Buffer.MemoryCopy(pSrc, pDst, dst.Length, newSize);</span><br><span class="line">            &#125;</span><br><span class="line">#else</span><br><span class="line">            Buffer.BlockCopy(src, 0, dst, 0, newSize);</span><br><span class="line">#endif</span><br><span class="line"></span><br><span class="line">            return dst;</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+<p>这样依赖内存可以复用，并且没有带来额外的损耗</p>
+<p>2.对数值型到字符串的转化进行了特定的优化，如int-&gt;string（itoa）,double-&gt;string(google/double-conversion)</p>
+<p>3.<a href="https://github.com/dotnet/coreclr/pull/3118" target="_blank" rel="noopener">优化了Buffer.MemoryCopy的性能问题</a></p>
+<p>等等。</p>
+<h2 id="重构"><a href="#重构" class="headerlink" title="重构"></a>重构</h2><p>定义一个Formatter专门用于处理服务端的response：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;&#x2F; &lt;summary&gt;</span><br><span class="line">    &#x2F;&#x2F;&#x2F;  Utf8Json的JRaw,压榨性能</span><br><span class="line">    &#x2F;&#x2F;&#x2F; &lt;&#x2F;summary&gt;</span><br><span class="line">    public class JRawFormatter : IJsonFormatter&lt;JRaw&gt;</span><br><span class="line">    &#123;</span><br><span class="line">        public static JRawFormatter Instance;</span><br><span class="line"></span><br><span class="line">        static JRawFormatter()</span><br><span class="line">        &#123;</span><br><span class="line">            Instance &#x3D; new JRawFormatter();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F;&#x2F; &lt;summary&gt;</span><br><span class="line">        &#x2F;&#x2F;&#x2F;  没有反序列化场景，暂时不管</span><br><span class="line">        &#x2F;&#x2F;&#x2F; &lt;&#x2F;summary&gt;</span><br><span class="line">        &#x2F;&#x2F;&#x2F; &lt;param name&#x3D;&quot;reader&quot;&gt;&lt;&#x2F;param&gt;</span><br><span class="line">        &#x2F;&#x2F;&#x2F; &lt;param name&#x3D;&quot;formatterResolver&quot;&gt;&lt;&#x2F;param&gt;</span><br><span class="line">        &#x2F;&#x2F;&#x2F; &lt;returns&gt;&lt;&#x2F;returns&gt;</span><br><span class="line">        public JRaw Deserialize(ref JsonReader reader, IJsonFormatterResolver formatterResolver)</span><br><span class="line">        &#123;</span><br><span class="line">            throw new System.NotImplementedException();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F;&#x2F; &lt;summary&gt;</span><br><span class="line">        &#x2F;&#x2F;&#x2F;  </span><br><span class="line">        &#x2F;&#x2F;&#x2F; &lt;&#x2F;summary&gt;</span><br><span class="line">        &#x2F;&#x2F;&#x2F; &lt;param name&#x3D;&quot;writer&quot;&gt;&lt;&#x2F;param&gt;</span><br><span class="line">        &#x2F;&#x2F;&#x2F; &lt;param name&#x3D;&quot;value&quot;&gt;&lt;&#x2F;param&gt;</span><br><span class="line">        &#x2F;&#x2F;&#x2F; &lt;param name&#x3D;&quot;formatterResolver&quot;&gt;&lt;&#x2F;param&gt;</span><br><span class="line">        public void Serialize(ref JsonWriter writer, JRaw value, IJsonFormatterResolver formatterResolver)</span><br><span class="line">        &#123;</span><br><span class="line">            if (value &#x3D;&#x3D; null)</span><br><span class="line">            &#123;</span><br><span class="line">                writer.WriteNull();</span><br><span class="line">                return;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            writer.WriteRaw(value.Payload);</span><br><span class="line"></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>处理服务端返回：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">public override async Task SetResponseOnHttpContextBody(HttpContext httpContext, DownstreamResponse response)</span><br><span class="line">        &#123;</span><br><span class="line">            object body &#x3D; default;</span><br><span class="line"></span><br><span class="line">            if (response.IsEmptyResponse())</span><br><span class="line">            &#123;</span><br><span class="line">                body &#x3D; new Response(null, 0);</span><br><span class="line">                httpContext.Response.StatusCode &#x3D; (int)HttpStatusCode.OK;</span><br><span class="line">            &#125;</span><br><span class="line">            else</span><br><span class="line">            &#123;</span><br><span class="line">                var responsePayload &#x3D; await response.Content.ReadAsStringAsync();</span><br><span class="line">                body &#x3D; new Response(new JRaw(responsePayload));</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">            var bodyBytes &#x3D; Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(body, _settings));</span><br><span class="line">            httpContext.Response.Headers.AddOrReplaceHeaderKey(&quot;Content-Length&quot;, bodyBytes.Length.ToString());</span><br><span class="line">            await httpContext.Response.Body.WriteAsync(bodyBytes);</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="https://github.com/neuecc/Utf8Json" target="_blank" rel="noopener">Utf8Json</a></p>
+<p><a href="https://michaelscodingspot.com/the-battle-of-c-to-json-serializers-in-net-core-3/" target="_blank" rel="noopener">The Battle of C# to JSON Serializers in .NET Core 3</a></p>
+<p><a href="https://stackoverflow.com/questions/56379096/re-use-memory-from-string-to-byte-array-conversion-with-arraypool-in-c" target="_blank" rel="noopener">Re-use memory from String to byte array conversion with ArrayPool in C#?</a></p>
+
+        
+        <br />
+        <div id="comment-container">
+        </div>
+        <div id="disqus_thread"></div>
+
+        <div id="lv-container">
+        </div>
+
+    </div>
+</div>
+
+    </div>
+</div>
+
+
+<footer class="footer">
+    <ul class="list-inline text-center">
+        
+        <li>
+            <a target="_blank" href="https://twitter.com/RebornXu">
+                            <span class="fa-stack fa-lg">
+                                <i class="iconfont icon-twitter"></i>
+                            </span>
+            </a>
+        </li>
+        
+        
+
+        
+        <li>
+            <a target="_blank" href="http://weibo.com/2016115931">
+                            <span class="fa-stack fa-lg">
+                                  <i class="iconfont icon-weibo"></i>
+                            </span>
+            </a>
+        </li>
+        
+
+        
+
+        
+        <li>
+            <a target="_blank"  href="https://github.com/loremipsumsharp">
+                            <span class="fa-stack fa-lg">
+                                <i class="iconfont icon-github"></i>
+                            </span>
+            </a>
+        </li>
+        
+
+        
+
+    </ul>
+    
+    <p>
+        <span id="busuanzi_container_site_pv">
+            <span id="busuanzi_value_site_pv"></span>PV
+        </span>
+        <span id="busuanzi_container_site_uv">
+            <span id="busuanzi_value_site_uv"></span>UV
+        </span>
+        Created By <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>  Theme <a href="https://github.com/aircloud/hexo-theme-aircloud" target="_blank" rel="noopener">AirCloud</a></p>
+</footer>
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-158639013-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-158639013-1');
+</script>
+
+
+</body>
+
+<script>
+    // We expose some of the variables needed by the front end
+    window.hexo_search_path = "search.json"
+    window.hexo_root = "/"
+    window.isPost = true
+</script>
+<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+
+<script src="/js/index.js"></script>
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+    <script type="text/javascript">
+       (function() {
+           if (typeof LivereTower === 'function') { return; }
+
+           var j, d = document.getElementById('lv-container');
+
+           d.setAttribute('data-id','city');
+           d.setAttribute('data-uid' , 'MTAyMC80ODY1NC8yNTE0OA');
+
+           j = document.createElement('script');
+           j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+           j.async = true;
+
+           d.appendChild(j);
+       })();
+    </script>
+    <noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+    </div>
+
+</html>
