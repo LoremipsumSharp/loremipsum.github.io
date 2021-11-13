@@ -94,7 +94,7 @@
     </div>
     
         <div id="toc" class="toc-article">
-    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Step1"><span class="toc-text">Step1</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#验证部署"><span class="toc-text">验证部署</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#配置权限"><span class="toc-text">配置权限</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#登录验证"><span class="toc-text">登录验证</span></a></li></ol></li></ol>
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#获取安装文件"><span class="toc-text">获取安装文件</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#验证部署"><span class="toc-text">验证部署</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#配置权限"><span class="toc-text">配置权限</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#登录验证"><span class="toc-text">登录验证</span></a></li></ol></li></ol>
 </div>
     
 </div>
@@ -137,7 +137,7 @@
 </span>
     </div>
     <div class="post-content ">
-        <h2 id="Step1"><a href="#Step1" class="headerlink" title="Step1"></a>Step1</h2><p>首先打开<a href="!https://github.com/kubernetes/dashboard">官方仓库</a>,将dashboard.yml文件拷贝到k8s master主机上。由于dashboard无法支持外部直接访问，所以我们需要对yaml文件的配置内容进行少量修改:</p>
+        <h2 id="获取安装文件"><a href="#获取安装文件" class="headerlink" title="获取安装文件"></a>获取安装文件</h2><p>首先打开<a href="!https://github.com/kubernetes/dashboard">官方仓库</a>,将dashboard.yml文件拷贝到k8s master主机上。由于dashboard无法支持外部直接访问，所以我们需要对yaml文件的配置内容进行少量修改:</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">kind: Service</span><br><span class="line">apiVersion: v1</span><br><span class="line">metadata:</span><br><span class="line">  labels:</span><br><span class="line">    k8s-app: kubernetes-dashboard</span><br><span class="line">  name: kubernetes-dashboard</span><br><span class="line">  namespace: kubernetes-dashboard</span><br><span class="line">spec:</span><br><span class="line">  type: NodePort</span><br><span class="line">  ports:</span><br><span class="line">    - port: 443</span><br><span class="line">      targetPort: 8443</span><br><span class="line">      nodePort: 30001</span><br><span class="line">  selector:</span><br><span class="line">    k8s-app: kubernetes-dashboard</span><br></pre></td></tr></table></figure>
 
 <p>这里将<code>kubernetes-dashboard</code>的对应的<code>Service</code>修改为NodePort,让服务可以直接对外暴露。</p>
