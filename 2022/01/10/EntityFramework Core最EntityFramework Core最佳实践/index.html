@@ -141,7 +141,7 @@
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">var userList &#x3D; dbContext.Users.AsNoTracking().ToListAsync();&#x2F;&#x2F;当使用AsNoTracking()后，通过IQueryable得到的实体列表不会被DbContext跟踪到</span><br></pre></td></tr></table></figure>
 
 
-<h2 id="重复跟踪实体对象"><a href="#重复跟踪实体对象" class="headerlink" title="重复跟踪实体对象"></a>重复跟踪实体对象</h2><p>对于那些不是通过<code>AsNoTracking()</code>得到的实体对象，Ef Core内部会自动通过ChangeTracker对这些实体对象进行跟踪，当需要将实体变更持久化到数据库时，不需要重复调用<code>Update</code>方法对实体对象进行跟踪。</p>
+<h2 id="重复跟踪实体对象"><a href="#重复跟踪实体对象" class="headerlink" title="重复跟踪实体对象"></a>重复跟踪实体对象</h2><p>对于那些不是通过<code>AsNoTracking()</code>得到的实体对象，Ef Core内部会自动通过<code>ChangeTracker</code>对这些实体对象进行跟踪，当需要将实体变更持久化到数据库时，不需要重复调用<code>Update</code>方法对实体对象进行跟踪。</p>
 <p>错误示范：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">var user &#x3D; dbContext.Users.FirstOrDefault(x&#x3D;&gt;x.Id &#x3D;&#x3D; 1);</span><br><span class="line">user.Name &#x3D; &quot;Loremipsum&quot;;</span><br><span class="line">dbContext.Users.Update(user); &#x2F;&#x2F; 这句话是不必要的</span><br><span class="line">dbContext.Users.SaveChanges();</span><br></pre></td></tr></table></figure>
 
@@ -150,7 +150,7 @@
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">var user &#x3D; dbContext.Users.FirstOrDefault(x&#x3D;&gt;x.Id &#x3D;&#x3D; 1);</span><br><span class="line">user.Name &#x3D; &quot;Loremipsum&quot;;</span><br><span class="line">dbContext.Users.SaveChanges();</span><br></pre></td></tr></table></figure>
 
 
-<h2 id="避免查询断言中的常量表达式"><a href="#避免查询断言中的常量表达式" class="headerlink" title="避免查询断言中的常量表达式"></a>避免查询断言中的常量表达式</h2><p>Ef Core底层会将Where断言中的lambda表达式树进行编译并缓存，在开发，如果我们的查询中存在大量常量表达式，可能会导致内存泄漏</p>
+<h2 id="避免查询断言中的常量表达式"><a href="#避免查询断言中的常量表达式" class="headerlink" title="避免查询断言中的常量表达式"></a>避免查询断言中的常量表达式</h2><p>Ef Core底层会将断言中的<code>lambda</code>表达式树进行编译并缓存，在开发，如果我们的查询中存在大量常量表达式，可能会导致内存泄漏</p>
 <p>错误示范:</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">var user1 &#x3D; dbContext.Users.FirstOrDefault(x&#x3D;&gt;x.Id &#x3D;&#x3D; 1);</span><br><span class="line">var user2 &#x3D; dbContext.Users.FirstOrDefault(x&#x3D;&gt;x.Id &#x3D;&#x3D; 2);</span><br></pre></td></tr></table></figure>
 
@@ -164,7 +164,7 @@
 <li>Ef Core需要一定配置才可以自动带出Dto，没有Dapper方便</li>
 </ol>
 <p>对于一些接入层的的复杂查询场景，用手写sql的方式可以获得更好的性能。</p>
-<p>Dapper是IDbConnection的一个Extension库，例子如下：</p>
+<p>Dapper是<code>IDbConnection</code>的一个Extension库，例子如下：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">string sql &#x3D; &quot;select * from users u  where u.Name like &#39;%loremipsum%&#39;&quot;;</span><br><span class="line">var userList &#x3D; _dbContext.Database.GetDbConnection().QueryAsync&lt;SomeDto&gt;(sql);</span><br></pre></td></tr></table></figure>
 
 
@@ -182,7 +182,7 @@
 <li>Dto 投影</li>
 </ol>
 <p>当我们需要生成一个复杂的Dto的时候，我们不得不用使用<code>Include</code>，然后再将导航属性投影到Dto上面，假如我们的Dto只需要导航属性上面的2个Properties，我们仍然不得不查出导航属性上面所有的Properties</p>
-<p>使用Lazy Proxy与  <a href="https://docs.automapper.org/en/stable/Queryable-Extensions.html" target="_blank" rel="noopener">AutoMapper QueryExtensions</a>可以减少投影过程中带来的损耗</p>
+<p>使用Lazy Proxy与<a href="https://docs.automapper.org/en/stable/Queryable-Extensions.html" target="_blank" rel="noopener">AutoMapper QueryExtensions</a>可以减少投影过程中带来的损耗</p>
 <h2 id="非必要场景，不要使用Code-First"><a href="#非必要场景，不要使用Code-First" class="headerlink" title="非必要场景，不要使用Code First"></a>非必要场景，不要使用Code First</h2><ol>
 <li>锁冲突：Code First生成的数据库模型会自动对关联关系生成外键，外键对数据库的性能造成一定影响，高并发场景下锁冲突的概率会大大增高</li>
 <li>在多人合作开发场景下，Code First的Migrations不易管理</li>
