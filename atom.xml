@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://loremipsumsharp.github.io/"/>
-  <updated>2022-03-05T07:33:24.507Z</updated>
+  <updated>2022-03-25T16:55:40.861Z</updated>
   <id>https://loremipsumsharp.github.io/</id>
   
   <author>
@@ -15,6 +15,29 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>如何使用GORM访问MySQL bit类型</title>
+    <link href="https://loremipsumsharp.github.io/2022/03/26/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8GORM%E8%AE%BF%E9%97%AEMySQL%20bit%E7%B1%BB%E5%9E%8B/"/>
+    <id>https://loremipsumsharp.github.io/2022/03/26/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8GORM%E8%AE%BF%E9%97%AEMySQL%20bit%E7%B1%BB%E5%9E%8B/</id>
+    <published>2022-03-25T16:44:00.000Z</published>
+    <updated>2022-03-25T16:55:40.861Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>使用<code>GORM</code>访问<code>MySQL</code>，提示</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">C:&#x2F;Development&#x2F;Go&#x2F;demohub&#x2F;playground&#x2F;gorm_test.go:111 sql: Scan error on column index 19, name &quot;Enabled&quot;: converting driver.Value type []uint8 (&quot;\x01&quot;) to a int64: invalid syntax</span><br><span class="line">[1.626ms] [rows:1] SELECT * FROM &#96;content&#96; WHERE &#96;id&#96; &#x3D; 546 LIMIT 1</span><br></pre></td></tr></table></figure><p>这里<code>GORM</code>无法将<code>MySQL</code>的<code>bit(1)</code>转化为<code>Golang</code>的<code>bool</code></p><h2 id="解决方法"><a href="#解决方法" class="headerlink" title="解决方法"></a>解决方法</h2><p>给bool类型定义一个alias，<code>BitBool</code>,并实现<code>Scan</code>及<code>Value</code>接口，如下所示：</p><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// BitBool is an implementation of a bool for the MySQL type BIT(1).</span></span><br><span class="line"><span class="comment">// This type allows you to avoid wasting an entire byte for MySQL's boolean type TINYINT.</span></span><br><span class="line"><span class="keyword">type</span> BitBool <span class="keyword">bool</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Value implements the driver.Valuer interface,</span></span><br><span class="line"><span class="comment">// and turns the BitBool into a bitfield (BIT(1)) for MySQL storage.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(b BitBool)</span> <span class="title">Value</span><span class="params">()</span> <span class="params">(driver.Value, error)</span></span> &#123;</span><br><span class="line">    <span class="keyword">if</span> b &#123;</span><br><span class="line">        <span class="keyword">return</span> []<span class="keyword">byte</span>&#123;<span class="number">1</span>&#125;, <span class="literal">nil</span></span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> []<span class="keyword">byte</span>&#123;<span class="number">0</span>&#125;, <span class="literal">nil</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Scan implements the sql.Scanner interface,</span></span><br><span class="line"><span class="comment">// and turns the bitfield incoming from MySQL into a BitBool</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(b *BitBool)</span> <span class="title">Scan</span><span class="params">(src <span class="keyword">interface</span>&#123;&#125;)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">    v, ok := src.([]<span class="keyword">byte</span>)</span><br><span class="line">    <span class="keyword">if</span> !ok &#123;</span><br><span class="line">        <span class="keyword">return</span> errors.New(<span class="string">"bad []byte type assertion"</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    *b = v[<span class="number">0</span>] == <span class="number">1</span></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>最后需要将<code>strut</code>中的bool字段替换为<code>BitBool</code></p><h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="https://stackoverflow.com/questions/47535543/mysqls-bit-type-maps-to-which-go-type" target="_blank" rel="noopener">MySQL’s bit type maps to which Go type</a></p>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h2 id=&quot;背景&quot;&gt;&lt;a href=&quot;#背景&quot; class=&quot;headerlink&quot; title=&quot;背景&quot;&gt;&lt;/a&gt;背景&lt;/h2&gt;&lt;p&gt;使用&lt;code&gt;GORM&lt;/code&gt;访问&lt;code&gt;MySQL&lt;/code&gt;，提示&lt;/p&gt;
+&lt;figure class=&quot;highligh
+      
+    
+    </summary>
+    
+    
+    
+  </entry>
   
   <entry>
     <title>升级RabbitMQ.Client到6.x.x版本后的消息消费乱码问题</title>
@@ -246,29 +269,6 @@
       
       
         &lt;h2 id=&quot;背景&quot;&gt;&lt;a href=&quot;#背景&quot; class=&quot;headerlink&quot; title=&quot;背景&quot;&gt;&lt;/a&gt;背景&lt;/h2&gt;&lt;p&gt;在使用Async/Await的过程中，经常出现原因不明的死锁，感觉代码写的没啥问题，但是程序就是卡住了，为了明白这个问题，必须知道async
-      
-    
-    </summary>
-    
-    
-    
-  </entry>
-  
-  <entry>
-    <title>如何使用GORM访问MySQL bit类型</title>
-    <link href="https://loremipsumsharp.github.io/2021/03/26/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8GORM%E8%AE%BF%E9%97%AEMySQL%20bit%E7%B1%BB%E5%9E%8B/"/>
-    <id>https://loremipsumsharp.github.io/2021/03/26/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8GORM%E8%AE%BF%E9%97%AEMySQL%20bit%E7%B1%BB%E5%9E%8B/</id>
-    <published>2021-03-25T16:44:00.000Z</published>
-    <updated>2022-03-25T16:54:03.469Z</updated>
-    
-    <content type="html"><![CDATA[<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>使用<code>GORM</code>访问<code>MySQL</code>，提示</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">C:&#x2F;Development&#x2F;Go&#x2F;demohub&#x2F;playground&#x2F;gorm_test.go:111 sql: Scan error on column index 19, name &quot;Enabled&quot;: converting driver.Value type []uint8 (&quot;\x01&quot;) to a int64: invalid syntax</span><br><span class="line">[1.626ms] [rows:1] SELECT * FROM &#96;content&#96; WHERE &#96;id&#96; &#x3D; 546 LIMIT 1</span><br></pre></td></tr></table></figure><p>这里<code>GORM</code>无法将<code>MySQL</code>的<code>bit(1)</code>转化为<code>Golang</code>的<code>bool</code></p><h2 id="解决方法"><a href="#解决方法" class="headerlink" title="解决方法"></a>解决方法</h2><p>给bool类型定义一个alias，<code>BitBool</code>,并实现<code>Scan</code>及<code>Value</code>接口，如下所示：</p><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// BitBool is an implementation of a bool for the MySQL type BIT(1).</span></span><br><span class="line"><span class="comment">// This type allows you to avoid wasting an entire byte for MySQL's boolean type TINYINT.</span></span><br><span class="line"><span class="keyword">type</span> BitBool <span class="keyword">bool</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Value implements the driver.Valuer interface,</span></span><br><span class="line"><span class="comment">// and turns the BitBool into a bitfield (BIT(1)) for MySQL storage.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(b BitBool)</span> <span class="title">Value</span><span class="params">()</span> <span class="params">(driver.Value, error)</span></span> &#123;</span><br><span class="line">    <span class="keyword">if</span> b &#123;</span><br><span class="line">        <span class="keyword">return</span> []<span class="keyword">byte</span>&#123;<span class="number">1</span>&#125;, <span class="literal">nil</span></span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> []<span class="keyword">byte</span>&#123;<span class="number">0</span>&#125;, <span class="literal">nil</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Scan implements the sql.Scanner interface,</span></span><br><span class="line"><span class="comment">// and turns the bitfield incoming from MySQL into a BitBool</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(b *BitBool)</span> <span class="title">Scan</span><span class="params">(src <span class="keyword">interface</span>&#123;&#125;)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">    v, ok := src.([]<span class="keyword">byte</span>)</span><br><span class="line">    <span class="keyword">if</span> !ok &#123;</span><br><span class="line">        <span class="keyword">return</span> errors.New(<span class="string">"bad []byte type assertion"</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    *b = v[<span class="number">0</span>] == <span class="number">1</span></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>最后需要将<code>strut</code>中的bool字段替换为<code>BitBool</code></p><h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="https://stackoverflow.com/questions/47535543/mysqls-bit-type-maps-to-which-go-type" target="_blank" rel="noopener">MySQL’s bit type maps to which Go type</a></p>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;h2 id=&quot;背景&quot;&gt;&lt;a href=&quot;#背景&quot; class=&quot;headerlink&quot; title=&quot;背景&quot;&gt;&lt;/a&gt;背景&lt;/h2&gt;&lt;p&gt;使用&lt;code&gt;GORM&lt;/code&gt;访问&lt;code&gt;MySQL&lt;/code&gt;，提示&lt;/p&gt;
-&lt;figure class=&quot;highligh
       
     
     </summary>
