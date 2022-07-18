@@ -144,7 +144,7 @@
 <p>为了解决CPU占用率过高的问题，首先我们使用火焰图找出当前Kong网关内部的一些调用热点：</p>
 <p><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/max.svg" alt=""></p>
 <p>从上图可以看出，整个Kong网关的CPU都消耗在了正则匹配上。</p>
-<p>我们进一步排查发现，我们这些流量很大的接口实际上并没有用到正则表达是，而是一个简单的前缀匹配：</p>
+<p>我们进一步排查发现，我们这些流量很大的接口实际上并没有用到正则表达式，而是一个简单的前缀匹配：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;foo</span><br></pre></td></tr></table></figure>
 
 <p>如上所示：当Kong拿到一个请求，如<code>http://bar.com/foo/xxxx</code>，那么这个时候Kong会将这个地址转化为<code>foo</code>对应的<code>upstream</code>,最终的URL为<code>http://foo-upstream/xxx</code>，进一步排查<code>Kong</code>源码，有如下发现，<br>当Kong初始化内部的路由表时，会将所有正则路由存放到一个<code>regex_uris</code>中，所有前缀匹配的路由存放到<code>prefix_uris</code>:</p>
