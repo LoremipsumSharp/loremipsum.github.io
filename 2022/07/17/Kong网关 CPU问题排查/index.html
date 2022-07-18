@@ -137,7 +137,7 @@
 </span>
     </div>
     <div class="post-content ">
-        <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>在Kong网关上线之前，公司原本是使用openresty作为所有业务的流量入口，qps 10w+，配置了api将近3000多条路由,其中大部分是正则路由。但是openresty的服务治理功能相对较弱，没有像Kong那样内置了大量开箱即用的插件，为了后续将一些服务治理的功能陆续迁移到网关层，如熔断，限流，决定使用Kong API网关对原有的Openresty进行替换，使用的版本是2.7.1</p>
+        <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>在Kong网关上线之前，公司原本是使用openresty作为所有业务的流量入口，qps 10w+，配置将近3000多条路由,其中大部分是正则路由。但是openresty的服务治理功能相对较弱，没有像Kong那样内置了大量开箱即用的插件，为了后续将一些服务治理的功能陆续迁移到网关层，如熔断，限流，决定使用Kong API网关对原有的Openresty进行替换，使用的版本是2.7.1</p>
 <p>在Kong网关上线后，其在CPU使用率上的不能让人满意，对该问题进行了排查并对此进行了优化</p>
 <h1 id="问题纪录"><a href="#问题纪录" class="headerlink" title="问题纪录"></a>问题纪录</h1><p>Kong网关上线后，我们逐步的将生产环境的流量从openresty切换到Kong，最开始，CPU负载表现正常，如下图所示：<br><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/before.png" alt="enter image description here">，每一个POD大概使用了0.4个核</p>
 <p>当我们开始将一些请求量大的接口切换到Kong网关上时，CPU占用率激增，从0.4核增加到了1.5核，一些POD CPU占用率更是达到了2.5核<br><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/after.png" alt="enter image description here"> </p>
