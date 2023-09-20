@@ -11,7 +11,7 @@
 
     <title>
         
-        Loremipsum Blog
+        使用VsCode搭建Kong插件开发环境 - Loremipsum Blog
         
     </title>
 
@@ -58,7 +58,7 @@
     </div>
     <div class="contents" id="nav-content">
         <ul>
-            <li  class=active >
+            <li >
                 <a href="/">
                     <i class="iconfont icon-shouye1"></i>
                     <span>主页</span>
@@ -93,6 +93,10 @@
         </ul>
     </div>
     
+        <div id="toc" class="toc-article">
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#背景"><span class="toc-text">背景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#配置方法"><span class="toc-text">配置方法</span></a></li></ol>
+</div>
+    
 </div>
 
 
@@ -117,161 +121,44 @@
     <div class="index-middle">
         <!-- Main Content -->
         
-<div class="post-preview-container" style="min-height: 648px">
-    
-    <div class="post-preview">
-        <div class="post-time">2021-08-16</div>
-        <div class="post-info">
-            <a href="/2021/08/16/通过Reactive.NET来理解Async&Await/">
-                <h3>
-                    通过Reactive.NET来理解Async&amp;Await
-                </h3>
-            </a>
-            <p>
-                
-            </p>
-        </div>
+
+
+<div class="post-container">
+    <div class="post-title">
+        使用VsCode搭建Kong插件开发环境
     </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2021-06-13</div>
-        <div class="post-info">
-            <a href="/2021/06/13/使用Autofixture提高单元测试编写效率/">
-                <h3>
-                    使用Autofixture提高单元测试编写效率
-                </h3>
-            </a>
-            <p>
-                
-            </p>
-        </div>
+
+    <div class="post-meta">
+        <span class="attr">发布于：<span>2023-09-21 00:28:00</span></span>
+        
+        </span>
+        <span class="attr">访问：<span id="busuanzi_value_page_pv"></span>
+</span>
+</span>
     </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2021-05-16</div>
-        <div class="post-info">
-            <a href="/2021/05/16/使用SourceLink调试Nuget包/">
-                <h3>
-                    使用SourceLink调试Nuget包源码
-                </h3>
-            </a>
-            <p>
-                
-            </p>
+    <div class="post-content ">
+        <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>使用VsCode去开发Lua脚本，体验一直都不太好，特别是当需要依赖一些第三方lib的时候，缺少代码提示，代码自动跳转，导致开发者很容易犯一些低级错误，在开发Kong插件的过程中深有体会，本文主要介绍如何通过配置VsCode插件来解决这个问题</p>
+<h2 id="配置方法"><a href="#配置方法" class="headerlink" title="配置方法"></a>配置方法</h2><p>首先，通过VsCode应用市场安装<code>lua language server</code></p>
+<p><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/20230921003645.png" alt=""></p>
+<p>第二步，在lua项目创建文件夹.vscode并创建配置文件settings.json</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">mkdir .vscode </span><br><span class="line"><span class="built_in">cd</span> .vscode </span><br><span class="line">touch settings.json</span><br></pre></td></tr></table></figure>
+
+<p>第三步，通过settings.json配置第三方库的引用路径</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"Lua.runtime.version"</span>: <span class="string">"LuaJIT"</span>,</span><br><span class="line">    <span class="attr">"Lua.diagnostics.globals"</span>: [</span><br><span class="line">        <span class="string">"ngx"</span>,</span><br><span class="line">        <span class="string">"kong"</span>,</span><br><span class="line">        <span class="string">"resty"</span></span><br><span class="line">    ],</span><br><span class="line">    <span class="attr">"Lua.workspace.library"</span>: [</span><br><span class="line">        <span class="string">"/root/workspace/kong"</span>,</span><br><span class="line">        <span class="string">"/root/workspace/lua_lib"</span></span><br><span class="line">    ],</span><br><span class="line">    <span class="attr">"Lua.workspace.checkThirdParty"</span>: <span class="literal">false</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面的配置是让<code>lua language server</code>能够在对应的文件夹找到引用的第三方库，从而实现自动提示和代码跳转，如下图所示</p>
+<p><img src="https://raw.githubusercontent.com/LoremipsumSharp/Images/master/img/20230921004327.png" alt=""></p>
+
+        
+        <br />
+        <div id="comment-container">
         </div>
-    </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2021-04-07</div>
-        <div class="post-info">
-            <a href="/2021/04/07/使用Utf8Json改善Ocelot对象序列化的性能/">
-                <h3>
-                    使用Utf8Json改善Ocelot对象序列化的性能
-                </h3>
-            </a>
-            <p>
-                
-            </p>
+        <div id="disqus_thread"></div>
+
+        <div id="lv-container">
         </div>
+
     </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2021-04-03</div>
-        <div class="post-info">
-            <a href="/2021/04/03/Await&Await是如何导致死锁的/">
-                <h3>
-                    Async/Await是如何导致死锁的
-                </h3>
-            </a>
-            <p>
-                
-            </p>
-        </div>
-    </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2021-03-01</div>
-        <div class="post-info">
-            <a href="/2021/03/01/使用dotnet template engine创建项目模板/">
-                <h3>
-                    使用dotnet template engine创建项目模板
-                </h3>
-            </a>
-            <p>
-                
-            </p>
-        </div>
-    </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2020-12-23</div>
-        <div class="post-info">
-            <a href="/2020/12/23/如何让Swashbuckle可以动态的增加EndPoint/">
-                <h3>
-                    如何Swashbuckle可以动态的增加EndPoint
-                </h3>
-            </a>
-            <p>
-                
-            </p>
-        </div>
-    </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2020-10-26</div>
-        <div class="post-info">
-            <a href="/2020/10/26/rxjs中tap,map,switchmap的区别/">
-                <h3>
-                    rxjs中tap,map,switchmap的区别
-                </h3>
-            </a>
-            <p>
-                
-            </p>
-        </div>
-    </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2020-09-22</div>
-        <div class="post-info">
-            <a href="/2020/09/22/GrpcChannel没有正常关闭而导致的内存泄露问题排查/">
-                <h3>
-                    Grpc Channel没有关闭而导致的内存泄露问题排查
-                </h3>
-            </a>
-            <p>
-                
-            </p>
-        </div>
-    </div>
-    
-    <div class="post-preview">
-        <div class="post-time">2020-09-21</div>
-        <div class="post-info">
-            <a href="/2020/09/21/Union查询性能优/">
-                <h3>
-                    Union查询性能优
-                </h3>
-            </a>
-            <p>
-                
-            </p>
-        </div>
-    </div>
-    
 </div>
-<ul class="pager">
-    
-    <li class="previous">
-        <a href="/">&larr; Newer Posts</a>
-    </li>
-    
-    
-    <li class="next">
-        <a href="/page/3/">Older Posts &rarr;</a>
-    </li>
-    
-</ul>
 
     </div>
 </div>
@@ -343,7 +230,7 @@
     // We expose some of the variables needed by the front end
     window.hexo_search_path = "search.json"
     window.hexo_root = "/"
-    window.isPost = false
+    window.isPost = true
 </script>
 <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
 
@@ -353,5 +240,24 @@
 
 
 
+
+    <script type="text/javascript">
+       (function() {
+           if (typeof LivereTower === 'function') { return; }
+
+           var j, d = document.getElementById('lv-container');
+
+           d.setAttribute('data-id','city');
+           d.setAttribute('data-uid' , 'MTAyMC80ODY1NC8yNTE0OA');
+
+           j = document.createElement('script');
+           j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+           j.async = true;
+
+           d.appendChild(j);
+       })();
+    </script>
+    <noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+    </div>
 
 </html>
